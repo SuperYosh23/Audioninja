@@ -2,7 +2,6 @@
 
 A browser-based YouTube Music player with a local Python backend. Search for songs, albums, and artists, create playlists, and get recommendations — all served through a hidden YouTube IFrame player.
 
-> **Note:** Search, album, and artist pages require the Python backend running locally. The deployed GitHub Pages site works for playlists, the player, and your listening history stored in localStorage.
 
 ## Features
 
@@ -84,13 +83,7 @@ npm run build:electron:win  # Windows (NSIS installer)
 npm run build:electron:mac  # macOS (DMG)
 ```
 
-## Deployment
-
-The site is deployed to GitHub Pages at [superyosh23.github.io/Audioninja](https://superyosh23.github.io/Audioninja). A GitHub Actions workflow automatically builds and deploys on every push to `main`.
-
-The Python backend is **not** available on GitHub Pages, so search/album/artist pages won't work there. The player, playlists, and localStorage-based features work fine.
-
-### Manual build
+## Build
 
 ```bash
 npm run build
