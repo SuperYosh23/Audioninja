@@ -1,6 +1,7 @@
-import { app, BrowserWindow, dialog } from 'electron';
+import { app, BrowserWindow, Menu, dialog } from 'electron';
 import { spawn } from 'child_process';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -20,6 +21,10 @@ function getBackendPath() {
 }
 
 function getPythonCmd() {
+  if (isDev) {
+    const venvPath = '/tmp/ytmusic-backend/bin/python3';
+    if (fs.existsSync(venvPath)) return venvPath;
+  }
   return process.platform === 'win32' ? 'python' : 'python3';
 }
 
@@ -62,6 +67,7 @@ function stopPythonBackend() {
 }
 
 function createWindow() {
+  Menu.setApplicationMenu(null);
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,

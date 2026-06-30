@@ -61,6 +61,29 @@ The Vite dev server runs on `http://localhost:5173` and proxies `/api` requests 
 3. Use the search bar at the top to find music.
 4. Navigate via the sidebar (Home, Search, Artists, Settings).
 
+## Desktop App (Electron)
+
+The app can also run as a standalone desktop application via Electron. The Electron build spawns the Python backend automatically and removes the default menu bar for a cleaner UI.
+
+### Development
+
+```bash
+# Start both Vite dev server and Electron together
+npm run dev:all
+
+# Or start separately:
+npm run dev          # Terminal 1: Vite dev server
+npm run dev:electron # Terminal 2: Electron window
+```
+
+### Build for distribution
+
+```bash
+npm run build:electron      # Linux (AppImage + deb)
+npm run build:electron:win  # Windows (NSIS installer)
+npm run build:electron:mac  # macOS (DMG)
+```
+
 ## Deployment
 
 The site is deployed to GitHub Pages at [superyosh23.github.io/Audioninja](https://superyosh23.github.io/Audioninja). A GitHub Actions workflow automatically builds and deploys on every push to `main`.
