@@ -2,6 +2,8 @@
 
 A browser-based YouTube Music player with a local Python backend. Search for songs, albums, and artists, create playlists, and get recommendations — all served through a hidden YouTube IFrame player.
 
+> **Note:** Search, album, and artist pages require the Python backend running locally. The deployed GitHub Pages site works for playlists, the player, and your listening history stored in localStorage.
+
 ## Features
 
 - **Search** — songs, albums, and artists via `ytmusicapi`
@@ -58,6 +60,20 @@ The Vite dev server runs on `http://localhost:5173` and proxies `/api` requests 
 2. Open `http://localhost:5173` in your browser.
 3. Use the search bar at the top to find music.
 4. Navigate via the sidebar (Home, Search, Artists, Settings).
+
+## Deployment
+
+The site is deployed to GitHub Pages at [superyosh23.github.io/Audioninja](https://superyosh23.github.io/Audioninja). A GitHub Actions workflow automatically builds and deploys on every push to `main`.
+
+The Python backend is **not** available on GitHub Pages, so search/album/artist pages won't work there. The player, playlists, and localStorage-based features work fine.
+
+### Manual build
+
+```bash
+npm run build
+```
+
+Serve the `dist/` folder with any static file server.
 
 ## Project Structure
 
