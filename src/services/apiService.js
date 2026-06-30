@@ -1,4 +1,4 @@
-const API_BASE = '/api'
+const API_BASE = globalThis.electronAPI?.backendUrl || '/api'
 
 async function fetchJson(url) {
   const res = await fetch(url)
