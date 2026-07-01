@@ -19,7 +19,10 @@ export const ArtistPage = () => {
   const artist = subPage?.params;
 
   useEffect(() => {
-    if (!artist?.name) return;
+    if (!artist?.name) {
+      setLoading(false);
+      return;
+    }
     let cancelled = false;
     setLoading(true);
     setIsFollowed(artistUtils.isFollowing(artist.artistId, artist.name));

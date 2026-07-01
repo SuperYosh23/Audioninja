@@ -38,7 +38,8 @@ export const Player = () => {
   if (!currentSong) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-b from-gray-900 to-black text-white px-4 py-3 animate-slideUp">
+    <div className="fixed bottom-0 left-0 right-0 z-50">
+      <div className="bg-gradient-to-b from-gray-900 to-black text-white px-4 py-3">
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center gap-3">
           <img
@@ -93,6 +94,7 @@ export const Player = () => {
             <span>{formatTime(progress)}</span>
             <span>{formatTime(duration)}</span>
           </div>
+        </div>
         </div>
       </div>
     </div>

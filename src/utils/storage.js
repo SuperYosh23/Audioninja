@@ -56,6 +56,7 @@ export const playlistUtils = {
     };
     playlists.push(newPlaylist);
     storage.savePlaylists(playlists);
+    window.dispatchEvent(new Event('playlists-changed'));
     return newPlaylist;
   },
 
@@ -65,6 +66,7 @@ export const playlistUtils = {
     if (index !== -1) {
       playlists[index] = { ...playlists[index], ...updates, updatedAt: new Date().toISOString() };
       storage.savePlaylists(playlists);
+      window.dispatchEvent(new Event('playlists-changed'));
       return playlists[index];
     }
     return null;
@@ -74,6 +76,7 @@ export const playlistUtils = {
     const playlists = storage.getPlaylists();
     const filtered = playlists.filter(p => p.id !== id);
     storage.savePlaylists(filtered);
+    window.dispatchEvent(new Event('playlists-changed'));
   },
 
   addSongToPlaylist: (playlistId, song) => {
@@ -83,6 +86,7 @@ export const playlistUtils = {
       playlist.songs.push({ ...song, addedAt: new Date().toISOString() });
       playlist.updatedAt = new Date().toISOString();
       storage.savePlaylists(playlists);
+      window.dispatchEvent(new Event('playlists-changed'));
       return playlist;
     }
     return null;
@@ -95,6 +99,7 @@ export const playlistUtils = {
       playlist.songs = playlist.songs.filter(s => s.videoId !== songId);
       playlist.updatedAt = new Date().toISOString();
       storage.savePlaylists(playlists);
+      window.dispatchEvent(new Event('playlists-changed'));
       return playlist;
     }
     return null;

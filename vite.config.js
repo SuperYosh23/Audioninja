@@ -2,12 +2,12 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
 export default defineConfig({
-  base: '/Audioninja/',
+  base: './',
   plugins: [react()],
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: 'http://localhost:3614',
         changeOrigin: true,
       },
       '/proxy-yt': {

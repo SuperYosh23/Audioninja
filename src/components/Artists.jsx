@@ -35,7 +35,7 @@ export const Artists = () => {
       if (songs.length > 0) setQueueSongs(songs, 0);
     } catch (err) {
       console.error('Failed to play artist:', err);
-      alert('Could not reach the music backend. Make sure the Python server is running on port 5000.');
+      alert('Could not reach the music backend. Make sure the Python server is running on port 3614.');
     }
   };
 

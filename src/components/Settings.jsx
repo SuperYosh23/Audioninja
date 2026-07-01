@@ -31,6 +31,7 @@ export const Settings = () => {
       ym_followed_artists: localStorage.getItem('ym_followed_artists'),
       ym_listening_history: localStorage.getItem('ym_listening_history'),
       ym_preferences: localStorage.getItem('ym_preferences'),
+      ym_eq_settings: localStorage.getItem('ym_eq_settings'),
       exportedAt: new Date().toISOString(),
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -49,7 +50,7 @@ export const Settings = () => {
     reader.onload = (ev) => {
       try {
         const data = JSON.parse(ev.target.result);
-        const keys = ['ym_playlists', 'ym_followed_artists', 'ym_listening_history', 'ym_preferences'];
+        const keys = ['ym_playlists', 'ym_followed_artists', 'ym_listening_history', 'ym_preferences', 'ym_eq_settings'];
         let count = 0;
         keys.forEach(key => {
           if (data[key] !== undefined) {

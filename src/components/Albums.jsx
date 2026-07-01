@@ -22,7 +22,7 @@ export const Albums = () => {
       setAlbums(results);
     } catch (err) {
       console.error('Album search failed:', err);
-      setError('Could not reach the music backend. Make sure the Python server is running on port 5000.');
+      setError('Could not reach the music backend. Make sure the Python server is running on port 3614.');
     } finally {
       setLoading(false);
     }

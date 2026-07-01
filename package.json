@@ -31,8 +31,7 @@
     ],
     "linux": {
       "target": [
-        "AppImage",
-        "deb"
+        "AppImage"
       ],
       "category": "Audio"
     },

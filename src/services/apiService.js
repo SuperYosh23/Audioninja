@@ -55,7 +55,7 @@ function toArtist(item) {
   return {
     type: 'artist',
     browseId: item.browseId || '',
-    name: item.title || item.name || '',
+    name: item.title || item.name || item.artist || '',
     subscribers: item.subscribers || item.subscriberCount || '',
     thumbnail: thumb(item.thumbnails),
   }

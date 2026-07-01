@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Search as SearchIcon, Play } from 'lucide-react';
 import { useNavigate } from './context/NavigationContext';
 import { usePlayer } from './context/PlayerContext';
@@ -16,14 +16,31 @@ import { AlbumPage } from './components/AlbumPage';
 function App() {
   const [activeTab, setActiveTab] = useState('home');
   const [searchQuery, setSearchQuery] = useState('');
+  const searchRef = useRef(null);
   const { subPage, navigate } = useNavigate();
-  const { playerExpanded } = usePlayer();
+  const { playerExpanded, setPlayerExpanded } = usePlayer();
+
+  useEffect(() => {
+    if (activeTab === 'search' && searchRef.current) {
+      searchRef.current.focus();
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (playerExpanded) setPlayerExpanded(false);
+  }, [activeTab, subPage]);
 
   const handleSearch = (e) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
     setActiveTab('search');
     navigate(null);
+  };
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    navigate(null);
+    setPlayerExpanded(false);
   };
 
   const renderMain = () => {
@@ -44,10 +61,11 @@ function App() {
     <div className="h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black text-white flex flex-col">
       {/* Top search bar */}
       <div className="bg-gray-900/95 border-b border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 py-2.5">
-          <form onSubmit={handleSearch} className="relative max-w-xl">
+        <div className="px-4 py-2.5 flex justify-center">
+          <form onSubmit={handleSearch} className="relative w-full max-w-xl">
             <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
             <input
+              ref={searchRef}
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -60,7 +78,7 @@ function App() {
 
       {/* Sidebar + Main content */}
       <div className="flex flex-1 min-h-0">
-        <Sidebar activeTab={activeTab} onTabChange={(tab) => { setActiveTab(tab); navigate(null) }} />
+        <Sidebar activeTab={activeTab} onTabChange={handleTabChange} onNavigate={() => setPlayerExpanded(false)} />
         <main className={`flex-1 overflow-y-auto animate-fadeIn ${!playerExpanded ? 'pb-20' : ''}`}>
           {playerExpanded ? <ExpandedPlayer /> : renderMain()}
         </main>
