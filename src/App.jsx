@@ -16,9 +16,17 @@ import { AlbumPage } from './components/AlbumPage';
 function App() {
   const [activeTab, setActiveTab] = useState('home');
   const [searchQuery, setSearchQuery] = useState('');
+  const [keepExpanded, setKeepExpanded] = useState(false);
   const searchRef = useRef(null);
   const { subPage, navigate } = useNavigate();
   const { playerExpanded, setPlayerExpanded } = usePlayer();
+
+  const handleMinimize = () => {
+    document.body.style.overflow = '';
+    setKeepExpanded(true);
+    setPlayerExpanded(false);
+    setTimeout(() => setKeepExpanded(false), 350);
+  };
 
   useEffect(() => {
     if (activeTab === 'search' && searchRef.current) {
@@ -58,7 +66,7 @@ function App() {
   };
 
   return (
-    <div className="h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black text-white flex flex-col">
+    <div className={`h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black text-white flex flex-col ${playerExpanded ? 'overflow-hidden' : ''}`}>
       {/* Top search bar */}
       <div className="bg-gray-900/95 border-b border-gray-700">
         <div className="px-4 py-2.5 flex justify-center">
@@ -79,12 +87,19 @@ function App() {
       {/* Sidebar + Main content */}
       <div className="flex flex-1 min-h-0">
         <Sidebar activeTab={activeTab} onTabChange={handleTabChange} onNavigate={() => setPlayerExpanded(false)} />
-        <main className={`flex-1 overflow-y-auto animate-fadeIn ${!playerExpanded ? 'pb-20' : ''}`}>
-          {playerExpanded ? <ExpandedPlayer /> : renderMain()}
+        <main className="flex-1 relative" style={{ overflow: (playerExpanded || keepExpanded) ? 'hidden' : 'auto', paddingBottom: (playerExpanded || keepExpanded) ? 0 : undefined }}>
+          <div>
+            {renderMain()}
+          </div>
+          {(playerExpanded || keepExpanded) && (
+            <div className="absolute inset-0 z-10">
+              <ExpandedPlayer closing={!playerExpanded && keepExpanded} onMinimize={handleMinimize} />
+            </div>
+          )}
         </main>
       </div>
 
-      {!playerExpanded && <Player />}
+      <Player playerExpanded={playerExpanded || keepExpanded} />
     </div>
   );
 }

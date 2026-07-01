@@ -1,8 +1,8 @@
 import { useRef } from 'react';
 import { usePlayer } from '../context/PlayerContext';
-import { Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Maximize2, Shuffle, Repeat, Repeat1 } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, ChevronUp, Shuffle, Repeat, Repeat1 } from 'lucide-react';
 
-export const Player = () => {
+export const Player = ({ playerExpanded }) => {
   const {
     currentSong,
     isPlaying,
@@ -38,7 +38,7 @@ export const Player = () => {
   if (!currentSong) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50">
+    <div className={`fixed bottom-0 left-0 right-0 z-50 transition-all duration-300 ease-out ${playerExpanded ? 'translate-y-full opacity-0' : 'translate-y-0 opacity-100'}`}>
       <div className="bg-gradient-to-b from-gray-900 to-black text-white px-4 py-3">
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center gap-3">
@@ -80,7 +80,7 @@ export const Player = () => {
           </div>
 
           <button onClick={() => setPlayerExpanded(true)} className="p-1.5 hover:bg-gray-800 rounded-full transition-colors">
-            <Maximize2 size={16} />
+            <ChevronUp size={16} />
           </button>
         </div>
 

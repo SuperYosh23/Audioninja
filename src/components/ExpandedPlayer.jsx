@@ -1,8 +1,8 @@
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
 import { usePlayer } from '../context/PlayerContext';
-import { Play, Pause, SkipForward, SkipBack, Shuffle, Repeat, Repeat1, Minimize2, Volume2, VolumeX } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, Shuffle, Repeat, Repeat1, ChevronDown, Volume2, VolumeX } from 'lucide-react';
 
-export const ExpandedPlayer = () => {
+export const ExpandedPlayer = ({ closing, onMinimize }) => {
   const {
     currentSong,
     isPlaying,
@@ -18,10 +18,14 @@ export const ExpandedPlayer = () => {
     changeVolume,
     toggleRepeat,
     toggleShuffle,
-    setPlayerExpanded,
   } = usePlayer();
 
   const progressRef = useRef(null);
+
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = '' };
+  }, []);
 
   const handleSeek = (e) => {
     if (!progressRef.current) return;
@@ -38,15 +42,15 @@ export const ExpandedPlayer = () => {
   if (!currentSong) return null;
 
   return (
-    <div className="h-full flex flex-col bg-gradient-to-b from-gray-900 via-gray-800 to-black text-white animate-fadeIn">
+    <div className={`h-full flex flex-col bg-gradient-to-b from-gray-900 via-gray-800 to-black text-white ${closing ? 'animate-slideDownToBottom' : 'animate-slideUpFromBottom'}`}>
       {/* Header */}
       <div className="flex items-center justify-end px-6 py-4">
         <button
-          onClick={() => setPlayerExpanded(false)}
+          onClick={onMinimize}
           className="p-2 hover:bg-gray-800 rounded-full transition-colors"
           title="Minimize"
         >
-          <Minimize2 size={20} />
+          <ChevronDown size={20} />
         </button>
       </div>
 
