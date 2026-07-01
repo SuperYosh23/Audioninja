@@ -2,6 +2,73 @@ const INNERTUBE_KEY = 'AIzaSyC9XL3ZjWddXya6X74dJoCTL-WEYFDNX30'
 const CLIENT_VERSION = '1.20250501.00.00'
 
 const useProxy = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+const useInvidious = !useProxy
+
+const INVIDIOUS_INSTANCES = [
+  'invidious.snopyta.org',
+  'yewtu.be',
+  'inv.vern.cc',
+]
+
+async function invidiousFetch(path, timeoutMs = 10000) {
+  let lastErr = null
+  for (const inst of INVIDIOUS_INSTANCES) {
+    try {
+      const ctrl = new AbortController()
+      const t = setTimeout(() => ctrl.abort(), timeoutMs)
+      const res = await fetch(`https://${inst}${path}`, { signal: ctrl.signal })
+      clearTimeout(t)
+      if (!res.ok) { lastErr = new Error(`${inst} returned ${res.status}`); continue }
+      return res.json()
+    } catch (e) { lastErr = e; continue }
+  }
+  throw lastErr || new Error('Invidious instances unavailable')
+}
+
+function ivSong(item) {
+  const t = item.videoThumbnails || []
+  return {
+    videoId: item.videoId || '',
+    title: item.title || '',
+    artists: [{ name: item.author || '', artistId: item.authorId || '' }],
+    channelTitle: item.author || '',
+    channelId: item.authorId || '',
+    thumbnail: t[t.length - 1]?.url || '',
+    duration: item.lengthSeconds || 0,
+    album: '',
+    albumId: '',
+  }
+}
+
+function ivArtist(item) {
+  const t = item.authorThumbnails || []
+  return {
+    type: 'artist',
+    browseId: item.authorId || '',
+    name: item.author || '',
+    subscribers: item.subCount ? fmtNum(item.subCount) : '',
+    thumbnail: t[t.length - 1]?.url || '',
+  }
+}
+
+function ivPlaylist(item) {
+  return {
+    type: 'playlist',
+    browseId: item.playlistId || '',
+    title: item.title || '',
+    channelTitle: item.author || '',
+    channelId: item.authorId || '',
+    thumbnail: item.playlistThumbnail || (item.authorThumbnails || []).slice(-1)[0]?.url || '',
+    itemCount: item.videoCount || 0,
+  }
+}
+
+function fmtNum(n) {
+  if (!n) return ''
+  if (n >= 1e6) return (n / 1e6).toFixed(1).replace(/\.0$/, '') + 'M'
+  if (n >= 1e3) return (n / 1e3).toFixed(1).replace(/\.0$/, '') + 'K'
+  return String(n)
+}
 
 function nav(data, path, fallback) {
   let current = data
@@ -480,12 +547,27 @@ function isValidSearchSong(i) {
 
 export const apiService = {
   async searchSongs(query, limit = 20) {
+    if (useInvidious) {
+      const items = await invidiousFetch(`/api/v1/search?q=${encodeURIComponent(query)}&type=video`)
+      if (!Array.isArray(items)) return []
+      return items.filter(i => i.type === 'video').slice(0, limit).map(ivSong)
+    }
     const data = await innertube('search', { query })
     const items = extractSearchResults(data)
     return items.filter(isValidSearchSong).slice(0, limit).map(toSong)
   },
 
   async searchAll(query) {
+    if (useInvidious) {
+      const items = await invidiousFetch(`/api/v1/search?q=${encodeURIComponent(query)}&type=all`)
+      if (!Array.isArray(items)) return { songs: [], albums: [], artists: [], playlists: [] }
+      return {
+        songs: items.filter(i => i.type === 'video').slice(0, 20).map(ivSong),
+        albums: [],
+        artists: items.filter(i => i.type === 'channel').slice(0, 10).map(ivArtist),
+        playlists: items.filter(i => i.type === 'playlist').slice(0, 10).map(ivPlaylist),
+      }
+    }
     const data = await innertube('search', { query })
     const items = extractSearchResults(data)
     return {
@@ -497,12 +579,18 @@ export const apiService = {
   },
 
   async searchAlbums(query, limit = 10) {
+    if (useInvidious) return []
     const data = await innertube('search', { query })
     const items = extractSearchResults(data)
     return items.filter(i => i.resultType === 'album' && i.browseId).slice(0, limit).map(toAlbum)
   },
 
   async searchArtists(query, limit = 10) {
+    if (useInvidious) {
+      const items = await invidiousFetch(`/api/v1/search?q=${encodeURIComponent(query)}&type=channel`)
+      if (!Array.isArray(items)) return []
+      return items.filter(i => i.type === 'channel').slice(0, limit).map(ivArtist)
+    }
     const data = await innertube('search', { query })
     const items = extractSearchResults(data)
     return items.filter(i => i.resultType === 'artist' && i.browseId).slice(0, limit).map(toArtist)
@@ -539,6 +627,28 @@ export const apiService = {
 
   async getPlaylist(playlistId) {
     const cleanId = playlistId.replace(/^VL/, '')
+    if (useInvidious) {
+      try {
+        const data = await invidiousFetch(`/api/v1/playlists/${cleanId}`)
+        const videos = data.videos || []
+        return {
+          title: data.title || '',
+          owner: data.author || '',
+          thumbnail: (data.authorThumbnails || []).slice(-1)[0]?.url || '',
+          trackCount: data.videoCount || videos.length,
+          tracks: videos.map(v => ({
+            videoId: v.videoId || '',
+            title: v.title || '',
+            artists: [{ name: v.author || '', artistId: v.authorId || '' }],
+            channelTitle: v.author || '',
+            channelId: v.authorId || '',
+            thumbnail: (v.videoThumbnails || []).slice(-1)[0]?.url || '',
+            duration: v.lengthSeconds || 0,
+            album: '',
+          })),
+        }
+      } catch {}
+    }
     const data = await innertube('browse', { browseId: cleanId })
     const header = parseBrowseHeader(data)
     const tracks = parseBrowseTracks(data)
@@ -552,6 +662,22 @@ export const apiService = {
   },
 
   async getSong(videoId) {
+    if (useInvidious) {
+      try {
+        const data = await invidiousFetch(`/api/v1/videos/${videoId}`)
+        const t = data.videoThumbnails || []
+        return {
+          videoId: data.videoId || videoId,
+          title: data.title || '',
+          artists: [{ name: data.author || '', artistId: data.authorId || '' }],
+          channelTitle: data.author || '',
+          channelId: data.authorId || '',
+          thumbnail: t[t.length - 1]?.url || '',
+          duration: data.lengthSeconds || 0,
+          description: data.description || '',
+        }
+      } catch {}
+    }
     const data = await innertube('player', { videoId, playlistId: `OLAK5uy_${videoId}` })
     const vd = data.videoDetails || {}
     return {
