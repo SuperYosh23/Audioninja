@@ -2,17 +2,16 @@ const INNERTUBE_KEY = 'AIzaSyC9XL3ZjWddXya6X74dJoCTL-WEYFDNX30'
 const CLIENT_VERSION = '1.20250501.00.00'
 
 const useProxy = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-const useInvidious = !useProxy
+const usePiped = !useProxy
 
-const INVIDIOUS_INSTANCES = [
-  'invidious.snopyta.org',
-  'yewtu.be',
-  'inv.vern.cc',
+const PIPED_INSTANCES = [
+  'pipedapi.kavin.rocks',
+  'pipedapi.adminforge.de',
 ]
 
-async function invidiousFetch(path, timeoutMs = 10000) {
+async function pipedFetch(path, timeoutMs = 8000) {
   let lastErr = null
-  for (const inst of INVIDIOUS_INSTANCES) {
+  for (const inst of PIPED_INSTANCES) {
     try {
       const ctrl = new AbortController()
       const t = setTimeout(() => ctrl.abort(), timeoutMs)
@@ -22,44 +21,46 @@ async function invidiousFetch(path, timeoutMs = 10000) {
       return res.json()
     } catch (e) { lastErr = e; continue }
   }
-  throw lastErr || new Error('Invidious instances unavailable')
+  throw lastErr || new Error('Piped instances unavailable')
 }
 
-function ivSong(item) {
-  const t = item.videoThumbnails || []
+function pipedSong(item) {
+  const vid = item.url?.replace('/watch?v=', '') || item.videoId || ''
+  const artistList = (item.artists || []).length
+    ? item.artists.map(a => ({ name: typeof a === 'string' ? a : (a.name || item.uploaderName || ''), artistId: '' }))
+    : [{ name: item.uploaderName || '', artistId: (item.uploaderUrl || '').replace('/channel/', '') || '' }]
   return {
-    videoId: item.videoId || '',
+    videoId: vid,
     title: item.title || '',
-    artists: [{ name: item.author || '', artistId: item.authorId || '' }],
-    channelTitle: item.author || '',
-    channelId: item.authorId || '',
-    thumbnail: t[t.length - 1]?.url || '',
-    duration: item.lengthSeconds || 0,
-    album: '',
+    artists: artistList,
+    channelTitle: item.uploaderName || '',
+    channelId: (item.uploaderUrl || '').replace('/channel/', '') || '',
+    thumbnail: item.thumbnailUrl || item.thumbnail || '',
+    duration: item.duration || 0,
+    album: item.album || '',
     albumId: '',
   }
 }
 
-function ivArtist(item) {
-  const t = item.authorThumbnails || []
+function pipedChannel(item) {
   return {
     type: 'artist',
-    browseId: item.authorId || '',
-    name: item.author || '',
-    subscribers: item.subCount ? fmtNum(item.subCount) : '',
-    thumbnail: t[t.length - 1]?.url || '',
+    browseId: (item.url || '').replace('/channel/', '') || item.authorId || '',
+    name: item.name || item.author || item.uploaderName || '',
+    subscribers: item.subscribers ? fmtNum(item.subscribers) : '',
+    thumbnail: item.avatarUrl || item.thumbnailUrl || item.thumbnail || '',
   }
 }
 
-function ivPlaylist(item) {
+function pipedPlaylist(item) {
   return {
     type: 'playlist',
-    browseId: item.playlistId || '',
-    title: item.title || '',
-    channelTitle: item.author || '',
-    channelId: item.authorId || '',
-    thumbnail: item.playlistThumbnail || (item.authorThumbnails || []).slice(-1)[0]?.url || '',
-    itemCount: item.videoCount || 0,
+    browseId: (item.url || '').replace('/playlist?list=', '') || item.playlistId || '',
+    title: item.name || item.title || '',
+    channelTitle: item.uploaderName || item.author || '',
+    channelId: (item.uploaderUrl || '').replace('/channel/', '') || item.authorId || '',
+    thumbnail: item.thumbnailUrl || item.thumbnail || item.playlistThumbnail || '',
+    itemCount: item.videos || item.videoCount || 0,
   }
 }
 
@@ -547,10 +548,10 @@ function isValidSearchSong(i) {
 
 export const apiService = {
   async searchSongs(query, limit = 20) {
-    if (useInvidious) {
-      const items = await invidiousFetch(`/api/v1/search?q=${encodeURIComponent(query)}&type=video`)
-      if (!Array.isArray(items)) return []
-      return items.filter(i => i.type === 'video').slice(0, limit).map(ivSong)
+    if (usePiped) {
+      const data = await pipedFetch(`/search?q=${encodeURIComponent(query)}&filter=music_songs`)
+      const items = data.items || []
+      return items.slice(0, limit).map(pipedSong)
     }
     const data = await innertube('search', { query })
     const items = extractSearchResults(data)
@@ -558,14 +559,17 @@ export const apiService = {
   },
 
   async searchAll(query) {
-    if (useInvidious) {
-      const items = await invidiousFetch(`/api/v1/search?q=${encodeURIComponent(query)}&type=all`)
-      if (!Array.isArray(items)) return { songs: [], albums: [], artists: [], playlists: [] }
+    if (usePiped) {
+      const [songsRes, channelsRes, playlistsRes] = await Promise.allSettled([
+        pipedFetch(`/search?q=${encodeURIComponent(query)}&filter=music_songs`),
+        pipedFetch(`/search?q=${encodeURIComponent(query)}&filter=channels`),
+        pipedFetch(`/search?q=${encodeURIComponent(query)}&filter=playlists`),
+      ])
       return {
-        songs: items.filter(i => i.type === 'video').slice(0, 20).map(ivSong),
+        songs: (songsRes.value?.items || []).slice(0, 20).map(pipedSong),
         albums: [],
-        artists: items.filter(i => i.type === 'channel').slice(0, 10).map(ivArtist),
-        playlists: items.filter(i => i.type === 'playlist').slice(0, 10).map(ivPlaylist),
+        artists: (channelsRes.value?.items || []).slice(0, 10).map(pipedChannel),
+        playlists: (playlistsRes.value?.items || []).slice(0, 10).map(pipedPlaylist),
       }
     }
     const data = await innertube('search', { query })
@@ -579,17 +583,17 @@ export const apiService = {
   },
 
   async searchAlbums(query, limit = 10) {
-    if (useInvidious) return []
+    if (usePiped) return []
     const data = await innertube('search', { query })
     const items = extractSearchResults(data)
     return items.filter(i => i.resultType === 'album' && i.browseId).slice(0, limit).map(toAlbum)
   },
 
   async searchArtists(query, limit = 10) {
-    if (useInvidious) {
-      const items = await invidiousFetch(`/api/v1/search?q=${encodeURIComponent(query)}&type=channel`)
-      if (!Array.isArray(items)) return []
-      return items.filter(i => i.type === 'channel').slice(0, limit).map(ivArtist)
+    if (usePiped) {
+      const data = await pipedFetch(`/search?q=${encodeURIComponent(query)}&filter=channels`)
+      const items = data.items || []
+      return items.slice(0, limit).map(pipedChannel)
     }
     const data = await innertube('search', { query })
     const items = extractSearchResults(data)
@@ -627,23 +631,23 @@ export const apiService = {
 
   async getPlaylist(playlistId) {
     const cleanId = playlistId.replace(/^VL/, '')
-    if (useInvidious) {
+    if (usePiped) {
       try {
-        const data = await invidiousFetch(`/api/v1/playlists/${cleanId}`)
+        const data = await pipedFetch(`/playlists/${cleanId}`)
         const videos = data.videos || []
         return {
-          title: data.title || '',
-          owner: data.author || '',
-          thumbnail: (data.authorThumbnails || []).slice(-1)[0]?.url || '',
-          trackCount: data.videoCount || videos.length,
+          title: data.name || '',
+          owner: data.uploader || '',
+          thumbnail: data.thumbnailUrl || data.uploaderAvatar || '',
+          trackCount: videos.length,
           tracks: videos.map(v => ({
             videoId: v.videoId || '',
             title: v.title || '',
-            artists: [{ name: v.author || '', artistId: v.authorId || '' }],
-            channelTitle: v.author || '',
-            channelId: v.authorId || '',
-            thumbnail: (v.videoThumbnails || []).slice(-1)[0]?.url || '',
-            duration: v.lengthSeconds || 0,
+            artists: [{ name: v.uploaderName || '', artistId: (v.uploaderUrl || '').replace('/channel/', '') || '' }],
+            channelTitle: v.uploaderName || '',
+            channelId: (v.uploaderUrl || '').replace('/channel/', '') || '',
+            thumbnail: v.thumbnailUrl || '',
+            duration: v.duration || 0,
             album: '',
           })),
         }
@@ -662,18 +666,17 @@ export const apiService = {
   },
 
   async getSong(videoId) {
-    if (useInvidious) {
+    if (usePiped) {
       try {
-        const data = await invidiousFetch(`/api/v1/videos/${videoId}`)
-        const t = data.videoThumbnails || []
+        const data = await pipedFetch(`/streams/${videoId}`)
         return {
           videoId: data.videoId || videoId,
           title: data.title || '',
-          artists: [{ name: data.author || '', artistId: data.authorId || '' }],
-          channelTitle: data.author || '',
-          channelId: data.authorId || '',
-          thumbnail: t[t.length - 1]?.url || '',
-          duration: data.lengthSeconds || 0,
+          artists: [{ name: data.uploader || '', artistId: (data.uploaderUrl || '').replace('/channel/', '') || '' }],
+          channelTitle: data.uploader || '',
+          channelId: (data.uploaderUrl || '').replace('/channel/', '') || '',
+          thumbnail: data.thumbnailUrl || '',
+          duration: data.duration || 0,
           description: data.description || '',
         }
       } catch {}
