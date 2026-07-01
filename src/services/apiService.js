@@ -29,7 +29,7 @@ async function innertube(endpoint, body) {
   const targetUrl = `https://music.youtube.com/youtubei/v1/${endpoint}?key=${INNERTUBE_KEY}`
   const url = useProxy
     ? `/proxy-yt/youtubei/v1/${endpoint}?key=${INNERTUBE_KEY}`
-    : `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`
+    : `https://corsproxy.io/?url=${encodeURIComponent(targetUrl)}`
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
