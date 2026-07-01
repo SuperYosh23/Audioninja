@@ -36,7 +36,7 @@ export const ArtistPage = () => {
         setAlbums(albumResults);
       }
     }).catch(err => {
-      if (!cancelled) { console.error('Failed to load artist data:', err); setError('Could not reach the music backend.'); }
+      if (!cancelled) { console.error('Failed to load artist data:', err); setError(err.message); }
     }).finally(() => {
       if (!cancelled) setLoading(false);
     });

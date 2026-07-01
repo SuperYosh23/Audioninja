@@ -17,9 +17,19 @@ function App() {
   const [activeTab, setActiveTab] = useState('home');
   const [searchQuery, setSearchQuery] = useState('');
   const [keepExpanded, setKeepExpanded] = useState(false);
+  const [showDisclaimer, setShowDisclaimer] = useState(false);
   const searchRef = useRef(null);
   const { subPage, navigate } = useNavigate();
   const { playerExpanded, setPlayerExpanded } = usePlayer();
+
+  useEffect(() => {
+    if (!localStorage.getItem('ym_disclaimer_seen')) setShowDisclaimer(true);
+  }, []);
+
+  const dismissDisclaimer = () => {
+    localStorage.setItem('ym_disclaimer_seen', 'true');
+    setShowDisclaimer(false);
+  };
 
   const handleMinimize = () => {
     document.body.style.overflow = '';
@@ -100,6 +110,23 @@ function App() {
       </div>
 
       <Player playerExpanded={playerExpanded || keepExpanded} />
+
+      {showDisclaimer && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 animate-fadeIn" onClick={dismissDisclaimer}>
+          <div className="bg-gray-800 rounded-xl w-full max-w-md mx-4 shadow-2xl border border-gray-700 animate-scaleIn p-6" onClick={e => e.stopPropagation()}>
+            <h2 className="text-lg font-bold text-white mb-3">Welcome to audioNINJA Web</h2>
+            <p className="text-sm text-gray-300 leading-relaxed">
+              This web version uses YouTube Music's public API directly in your browser. Search results, artist names, and metadata may not be as accurate or complete as the official desktop app.
+            </p>
+            <button
+              onClick={dismissDisclaimer}
+              className="mt-5 w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

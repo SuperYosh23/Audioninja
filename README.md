@@ -1,11 +1,10 @@
 # audioNINJA
 
-A browser-based YouTube Music player with a local Python backend. Search for songs, albums, and artists, create playlists, and get recommendations — all served through a hidden YouTube IFrame player.
-
+A browser-based YouTube Music player that runs entirely on GitHub Pages — no backend required.
 
 ## Features
 
-- **Search** — songs, albums, and artists via `ytmusicapi`
+- **Search** — songs, albums, and artists via YouTube Data API v3
 - **Artist & Album pages** — dedicated pages with play-all, shuffle
 - **Playlists** — create, edit, reorder, custom thumbnail upload
 - **Recommendations** — "Recommended For You" and "Recently Played" based on listening history
@@ -19,77 +18,41 @@ A browser-based YouTube Music player with a local Python backend. Search for son
 ## Prerequisites
 
 - **Node.js** 18+ and npm
-- **Python 3** with pip
+- **YouTube Data API v3 key** (free — get one from [Google Cloud Console](https://console.cloud.google.com/apis/credentials))
 
 ## Setup
 
-### 1. Python backend
+### 1. Get a YouTube Data API key
 
-```bash
-python3 -m venv /tmp/ytmusic-backend
-source /tmp/ytmusic-backend/bin/activate
-pip install ytmusicapi flask flask-cors
-```
+1. Go to the [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
+2. Create a new project or select an existing one
+3. Enable the **YouTube Data API v3**
+4. Create an API key (restrict it to "YouTube Data API v3" for security)
 
-### 2. Start the backend
-
-```bash
-python3 backend/server.py
-```
-
-The Flask server runs on `http://localhost:5000`.
-
-### 3. Install frontend dependencies
+### 2. Install and run
 
 ```bash
 npm install
-```
-
-### 4. Start the dev server
-
-```bash
 npm run dev
 ```
 
-The Vite dev server runs on `http://localhost:5173` and proxies `/api` requests to the Python backend.
+Open `http://localhost:5173` in your browser, then enter your API key in **Settings → YouTube API Key**.
 
-## Usage
-
-1. Both the Python backend (`python3 backend/server.py`) and Vite dev server (`npm run dev`) must be running.
-2. Open `http://localhost:5173` in your browser.
-3. Use the search bar at the top to find music.
-4. Navigate via the sidebar (Home, Search, Artists, Settings).
-
-## Desktop App (Electron)
-
-The app can also run as a standalone desktop application via Electron. The Electron build spawns the Python backend automatically and removes the default menu bar for a cleaner UI.
-
-### Development
-
-```bash
-# Start both Vite dev server and Electron together
-npm run dev:all
-
-# Or start separately:
-npm run dev          # Terminal 1: Vite dev server
-npm run dev:electron # Terminal 2: Electron window
-```
-
-### Build for distribution
-
-```bash
-npm run build:electron      # Linux (AppImage + deb)
-npm run build:electron:win  # Windows (NSIS installer)
-npm run build:electron:mac  # macOS (DMG)
-```
-
-## Build
+## Build for production
 
 ```bash
 npm run build
 ```
 
-Serve the `dist/` folder with any static file server.
+Serve the `dist/` folder with any static file server, or deploy to GitHub Pages.
+
+## Deploy to GitHub Pages
+
+This branch includes a GitHub Actions workflow (`.github/workflows/deploy.yml`) that automatically builds and deploys to GitHub Pages on every push to `main`.
+
+1. Go to your repo **Settings → Pages**
+2. Under "Build and deployment", select **GitHub Actions**
+3. Push to `main` — the workflow will deploy automatically
 
 ## Project Structure
 
@@ -107,22 +70,25 @@ src/
     PlaylistPage.jsx     — Playlist detail/edit page
     PlaylistPickerModal.jsx  — Add-to-playlist modal
     Artists.jsx          — Followed artists list
-    Settings.jsx         — Preferences, import/export
+    Albums.jsx           — Album search page
+    Settings.jsx         — Preferences, API key, import/export
   context/
     PlayerContext.jsx    — Player state, YouTube IFrame lifecycle
     NavigationContext.jsx — Sub-page routing
   services/
-    apiService.js        — Calls Python backend, data mapping
-    youtubeScraper.js    — Delegates to apiService
+    apiService.js        — YouTube Data API v3 calls, data mapping
+    youtubeScraper.js    — Service wrapper
   utils/
     storage.js           — LocalStorage helpers (playlists, artists, history)
-backend/
-  server.py              — Flask server wrapping ytmusicapi
 ```
 
 ## Tech Stack
 
 - **Frontend**: React, Tailwind CSS v4, Lucide React icons
-- **Backend**: Python Flask, ytmusicapi
+- **Data**: YouTube Data API v3
 - **Player**: YouTube IFrame API (hidden)
 - **Storage**: browser localStorage
+
+## License
+
+MIT

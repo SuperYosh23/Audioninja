@@ -21,7 +21,7 @@ export const AlbumPage = () => {
       .then(data => {
         setTracks(data);
       })
-      .catch(err => { console.error('Failed to load album tracks:', err); setError('Could not reach the music backend.'); })
+      .catch(err => { console.error('Failed to load album tracks:', err); setError(err.message); })
       .finally(() => setLoading(false));
   }, [album?.playlistId]);
 

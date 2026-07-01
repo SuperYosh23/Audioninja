@@ -24,7 +24,7 @@ export const Search = ({ searchQuery, setSearchQuery }) => {
     setError('')
     youtubeScraperService.searchAll(searchQuery)
       .then(data => { if (!cancelled) setResults(data) })
-      .catch(err => { if (!cancelled) { console.error('Search failed:', err); setError('Could not reach the music backend. Make sure the Python server is running on port 3614.') } })
+      .catch(err => { if (!cancelled) { console.error('Search failed:', err); setError(err.message) } })
       .finally(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
   }, [searchQuery])

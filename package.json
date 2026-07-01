@@ -3,49 +3,11 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "main": "electron/main.js",
   "scripts": {
     "dev": "vite",
-    "dev:electron": "NODE_ENV=development electron .",
-    "dev:all": "concurrently \"npm run dev\" \"wait-on http://localhost:5173 && npm run dev:electron\"",
     "build": "vite build",
-    "build:electron": "vite build && electron-builder --linux",
-    "build:electron:win": "vite build && electron-builder --win",
-    "build:electron:mac": "vite build && electron-builder --mac",
-    "lint": "oxlint",
-    "preview": "vite preview"
-  },
-  "build": {
-    "appId": "com.audioninja.app",
-    "productName": "audioNINJA",
-    "files": [
-      "dist/**/*",
-      "electron/**/*",
-      "backend/**/*"
-    ],
-    "extraResources": [
-      {
-        "from": "backend",
-        "to": "backend"
-      }
-    ],
-    "linux": {
-      "target": [
-        "AppImage"
-      ],
-      "category": "Audio"
-    },
-    "mac": {
-      "target": [
-        "dmg"
-      ],
-      "category": "public.app-category.music"
-    },
-    "win": {
-      "target": [
-        "nsis"
-      ]
-    }
+    "preview": "vite preview",
+    "lint": "oxlint"
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.3.2",
@@ -58,17 +20,9 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.3",
     "autoprefixer": "^10.5.2",
-    "concurrently": "^9.2.3",
-    "electron": "^33.3.1",
-    "electron-builder": "^26.0.12",
     "oxlint": "^1.71.0",
     "postcss": "^8.5.16",
     "tailwindcss": "^4.3.2",
-    "vite": "^8.1.1",
-    "wait-on": "^8.0.3"
-  },
-  "allowScripts": {
-    "electron-winstaller@5.4.0": true,
-    "electron@33.3.1": true
+    "vite": "^8.1.1"
   }
 }

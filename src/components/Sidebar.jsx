@@ -51,7 +51,10 @@ export const Sidebar = ({ activeTab, onTabChange, onNavigate }) => {
         {!collapsed && (
           <div className="flex items-center gap-2">
             <Play className="text-red-600 shrink-0" size={24} />
-            <span className="text-base font-bold whitespace-nowrap" style={{ fontFamily: "system-ui, 'Segoe UI', Roboto, sans-serif" }}>audio<span className="text-red-600">NINJA</span></span>
+            <div>
+              <span className="text-base font-bold whitespace-nowrap" style={{ fontFamily: "system-ui, 'Segoe UI', Roboto, sans-serif" }}>audio<span className="text-red-600">NINJA</span></span>
+              <p className="text-[10px] text-gray-500 leading-none mt-0.5">Web Version</p>
+            </div>
           </div>
         )}
       </div>

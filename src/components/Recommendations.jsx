@@ -39,7 +39,7 @@ export const Recommendations = () => {
       }
     } catch (err) {
       console.error('Failed to load recommendations:', err);
-      setError('Could not reach the music backend. Make sure the Python server is running on port 3614.');
+      setError(err.message);
     } finally {
       setLoading(false);
     }
