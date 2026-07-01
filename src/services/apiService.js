@@ -2,8 +2,6 @@ const INNERTUBE_KEY = 'AIzaSyC9XL3ZjWddXya6X74dJoCTL-WEYFDNX30'
 const CLIENT_VERSION = '1.20250501.00.00'
 
 const useProxy = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-const PROXY_BASE = useProxy ? '/proxy-yt' : 'https://corsproxy.io/?https://music.youtube.com'
-const API_BASE = `${PROXY_BASE}/youtubei/v1`
 
 function nav(data, path, fallback) {
   let current = data
@@ -28,7 +26,10 @@ function parseDuration(text) {
 }
 
 async function innertube(endpoint, body) {
-  const url = `${API_BASE}/${endpoint}?key=${INNERTUBE_KEY}`
+  const targetUrl = `https://music.youtube.com/youtubei/v1/${endpoint}?key=${INNERTUBE_KEY}`
+  const url = useProxy
+    ? `/proxy-yt/youtubei/v1/${endpoint}?key=${INNERTUBE_KEY}`
+    : `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
