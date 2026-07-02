@@ -32,6 +32,9 @@ export const PlayerProvider = ({ children }) => {
   const [repeat, setRepeat] = useState('off');
   const [shuffle, setShuffle] = useState(false);
   const [playerExpanded, setPlayerExpanded] = useState(false);
+  const [dragOffset, setDragOffset] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [minimizeOffset, setMinimizeOffset] = useState(0);
 
   const playerRef = useRef(null);
   const intervalRef = useRef(null);
@@ -136,7 +139,7 @@ export const PlayerProvider = ({ children }) => {
           const dur = playerRef.current.getDuration();
           if (dur > 0) setDuration(dur);
         }
-      }, 1000);
+      }, 10);
     } else {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
@@ -409,9 +412,17 @@ export const PlayerProvider = ({ children }) => {
     setDuration,
     setIsPlaying,
     toggleRepeat,
+    setRepeat,
     toggleShuffle,
+    setShuffle,
     playerExpanded,
     setPlayerExpanded,
+    dragOffset,
+    setDragOffset,
+    isDragging,
+    setIsDragging,
+    minimizeOffset,
+    setMinimizeOffset,
   };
 
   return (

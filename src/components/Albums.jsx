@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Disc3, Search as SearchIcon } from 'lucide-react';
 import { useNavigate } from '../context/NavigationContext';
 import { youtubeScraperService } from '../services/youtubeScraper';
+import { LoadingIndicator } from './LoadingIndicator';
 
 export const Albums = () => {
   const [query, setQuery] = useState('');
@@ -66,7 +67,7 @@ export const Albums = () => {
 
       {loading && (
         <div className="text-center text-on-surface-variant py-8">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
+          <LoadingIndicator size="lg" className="mx-auto" />
           <p className="mt-4">Searching albums...</p>
         </div>
       )}

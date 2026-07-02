@@ -18,7 +18,7 @@ function App() {
   const [keepExpanded, setKeepExpanded] = useState(false);
   const searchRef = useRef(null);
   const { subPage, navigate } = useNavigate();
-  const { playerExpanded, setPlayerExpanded } = usePlayer();
+  const { playerExpanded, setPlayerExpanded, dragOffset } = usePlayer();
 
   const handleMinimize = () => {
     document.body.style.overflow = '';
@@ -66,7 +66,7 @@ function App() {
   return (
     <div className={`h-screen bg-surface-dim text-on-surface flex flex-col ${playerExpanded ? 'overflow-hidden' : ''}`}>
       {/* Top search bar */}
-      <div className="bg-surface-container border-b border-outline-variant">
+      <div className="relative z-40 bg-surface-container border-b border-outline-variant">
         <div className="px-4 py-2.5 flex justify-center">
           <form onSubmit={handleSearch} className="relative w-full max-w-xl">
             <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-outline" size={18} />
@@ -76,7 +76,7 @@ function App() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder='Search for songs, albums...'
-              className="w-full pl-10 pr-4 py-2 bg-surface-container text-on-surface text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full pl-10 pr-4 py-2 bg-surface text-on-surface text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
             />
           </form>
         </div>
@@ -89,7 +89,7 @@ function App() {
           <div>
             {renderMain()}
           </div>
-          {(playerExpanded || keepExpanded) && (
+          {(playerExpanded || keepExpanded || dragOffset > 0) && (
             <div className="absolute inset-0 z-10">
               <ExpandedPlayer closing={!playerExpanded && keepExpanded} onMinimize={handleMinimize} />
             </div>
@@ -97,7 +97,7 @@ function App() {
         </main>
       </div>
 
-      <Player playerExpanded={playerExpanded || keepExpanded} />
+      <Player playerExpanded={playerExpanded} />
     </div>
   );
 }

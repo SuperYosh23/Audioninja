@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Plus, Music, Sparkles, Search, Settings, Play, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Music, Home, Search, Settings, Play, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from '../context/NavigationContext';
 import { storage, playlistUtils } from '../utils/storage';
 
 const navItems = [
-  { id: 'home', label: 'Home', icon: Sparkles },
+  { id: 'home', label: 'Home', icon: Home },
   { id: 'search', label: 'Search', icon: Search },
   { id: 'settings', label: 'Settings', icon: Settings },
 ]
@@ -14,7 +14,8 @@ export const Sidebar = ({ activeTab, onTabChange, onNavigate }) => {
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState('');
   const [collapsed, setCollapsed] = useState(false);
-  const { navigate } = useNavigate();
+  const { subPage, navigate } = useNavigate();
+  const activePlaylistId = subPage?.type === 'playlist' ? subPage.params.id : null;
 
   const refresh = () => setPlaylists(storage.getPlaylists());
 
@@ -68,7 +69,7 @@ export const Sidebar = ({ activeTab, onTabChange, onNavigate }) => {
                   ? 'justify-center'
                   : 'gap-3 px-3'
               } ${
-                activeTab === item.id
+                activeTab === item.id && !activePlaylistId
                   ? 'bg-primary/20 text-primary'
                   : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
               }`}
@@ -126,8 +127,10 @@ export const Sidebar = ({ activeTab, onTabChange, onNavigate }) => {
                 <button
                   key={pl.id}
                   onClick={() => handlePlaylistClick(pl)}
-                  className={`w-full flex items-center py-2 rounded-lg hover:bg-surface-container transition-colors group ${
+                  className={`w-full flex items-center py-2 rounded-lg transition-colors group ${
                     collapsed ? 'justify-center' : 'gap-3 px-3 text-left'
+                  } ${
+                    activePlaylistId === pl.id ? 'bg-primary/20 text-primary' : 'hover:bg-surface-container'
                   }`}
                   title={collapsed ? pl.name : undefined}
                 >

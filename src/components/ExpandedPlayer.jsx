@@ -1,6 +1,8 @@
-import { useRef, useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { usePlayer } from '../context/PlayerContext';
 import { Play, Pause, SkipForward, SkipBack, Shuffle, Repeat, Repeat1, ChevronDown, Volume2, VolumeX, Download } from 'lucide-react';
+import { LoadingIndicator } from './LoadingIndicator';
+import { WavyProgressBar } from './WavyProgressBar';
 
 function getBestThumbnail(url) {
   if (!url) return url;
@@ -29,12 +31,27 @@ export const ExpandedPlayer = ({ closing, onMinimize }) => {
     changeVolume,
     toggleRepeat,
     toggleShuffle,
+    dragOffset,
+    minimizeOffset,
+    setMinimizeOffset,
   } = usePlayer();
   const [imgSrc, setImgSrc] = useState(() => currentSong?.thumbnail ? getBestThumbnail(currentSong.thumbnail) : '');
   const [prevImgSrc, setPrevImgSrc] = useState(null);
   const [downloading, setDownloading] = useState(false);
+  const [entering, setEntering] = useState(true);
+  const dragRef = useRef({ moved: false });
 
-  const progressRef = useRef(null);
+  useEffect(() => {
+    if (dragOffset > 0 || minimizeOffset > 0) {
+      setEntering(false);
+    }
+  }, [dragOffset, minimizeOffset]);
+
+  useEffect(() => {
+    if (!dragOffset && !minimizeOffset && !closing) {
+      requestAnimationFrame(() => setEntering(false));
+    }
+  }, []);
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -74,10 +91,8 @@ export const ExpandedPlayer = ({ closing, onMinimize }) => {
     }
   };
 
-  const handleSeek = (e) => {
-    if (!progressRef.current) return;
-    const rect = progressRef.current.getBoundingClientRect();
-    seekTo(((e.clientX - rect.left) / rect.width) * duration);
+  const handleSeek = (fraction) => {
+    seekTo(fraction * duration);
   };
 
   const formatTime = (s) => {
@@ -86,12 +101,68 @@ export const ExpandedPlayer = ({ closing, onMinimize }) => {
     return `${m}:${sec.toString().padStart(2, '0')}`;
   };
 
+  const handleHeaderPointerDown = (e) => {
+    const startY = e.clientY;
+    let offset = 0;
+    dragRef.current.moved = false;
+    let lastY = e.clientY;
+    let lastTime = Date.now();
+    let velocity = 0;
+
+    const onMove = (ev) => {
+      const now = Date.now();
+      const dt = now - lastTime;
+      if (dt > 0) {
+        velocity = (ev.clientY - lastY) / dt;
+        lastY = ev.clientY;
+        lastTime = now;
+      }
+      const delta = ev.clientY - startY;
+      if (delta > 5) dragRef.current.moved = true;
+      offset = Math.max(0, delta);
+      setMinimizeOffset(offset);
+    };
+
+    const onUp = () => {
+      document.removeEventListener('pointermove', onMove);
+      document.removeEventListener('pointerup', onUp);
+      setMinimizeOffset(0);
+      if ((dragRef.current.moved && offset > 80) || velocity > 0.3) {
+        onMinimize();
+      }
+    };
+
+    document.addEventListener('pointermove', onMove);
+    document.addEventListener('pointerup', onUp);
+  };
+
   if (!currentSong) return null;
 
+  const expanding = dragOffset > 0;
+  const minimizing = minimizeOffset > 0;
+  const anyDrag = expanding || minimizing;
+
+  const expandTransform = minimizing
+    ? `translateY(${minimizeOffset}px)`
+    : expanding
+      ? `translateY(calc(100% - ${dragOffset}px))`
+      : (entering || closing)
+        ? 'translateY(100%)'
+        : 'translateY(0%)';
+
   return (
-    <div className={`h-full flex flex-col bg-surface-dim text-on-surface ${closing ? 'animate-slideDownToBottom' : 'animate-slideUpFromBottom'}`}>
+    <div
+      className="h-full flex flex-col bg-surface-dim text-on-surface"
+      style={{
+        transform: expandTransform,
+        transition: anyDrag ? 'none' : 'transform 0.35s cubic-bezier(0.05, 0.7, 0.1, 1)',
+      }}
+    >
       {/* Header */}
-      <div className="flex items-center justify-end px-6 py-4">
+      <div
+        className="flex items-center justify-end px-6 py-4 touch-none select-none"
+        onPointerDown={handleHeaderPointerDown}
+      >
         <button
           onClick={onMinimize}
           className="p-2 hover:bg-surface-container rounded-full transition-colors"
@@ -136,18 +207,11 @@ export const ExpandedPlayer = ({ closing, onMinimize }) => {
             <div className="space-y-4">
               {/* Progress */}
               <div>
-                <div
-                  ref={progressRef}
-                  onClick={handleSeek}
-                  className="h-1.5 bg-surface-container-high rounded-full cursor-pointer relative group"
-                >
-                  <div
-                    className="h-full bg-primary rounded-full relative"
-                    style={{ width: `${duration > 0 ? (progress / duration) * 100 : 0}%` }}
-                  >
-                    <div className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow" />
-                  </div>
-                </div>
+                <WavyProgressBar
+                  progress={duration > 0 ? progress / duration : 0}
+                  height={6}
+                  onSeek={handleSeek}
+                />
                 <div className="flex justify-between text-xs text-on-surface-variant mt-1.5">
                   <span>{formatTime(progress)}</span>
                   <span>{formatTime(duration)}</span>
@@ -204,7 +268,7 @@ export const ExpandedPlayer = ({ closing, onMinimize }) => {
       {downloading && (
         <div className="absolute inset-0 z-20 flex items-center justify-center bg-scrim/60 backdrop-blur-sm">
           <div className="bg-surface-container rounded-2xl p-8 flex flex-col items-center gap-4 shadow-2xl animate-scaleIn">
-            <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+            <LoadingIndicator size="md" />
             <p className="text-on-surface text-lg font-medium">Please wait...</p>
             <p className="text-on-surface-variant text-sm truncate max-w-64">{currentSong?.title}</p>
           </div>

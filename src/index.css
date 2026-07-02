@@ -37,6 +37,8 @@
   --color-scrim: #000000;
 }
 
+button { cursor: pointer; }
+
 body {
   margin: 0;
   background: #141218;
@@ -113,6 +115,8 @@ body {
   from { opacity: 0; transform: translateY(16px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+
 
 .animate-fadeIn { animation: fadeIn 0.4s cubic-bezier(0.05, 0.7, 0.1, 1); }
 .animate-fadeOut { animation: fadeOut 0.2s cubic-bezier(0.3, 0, 0.8, 0.15) forwards; }

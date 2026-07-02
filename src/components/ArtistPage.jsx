@@ -4,6 +4,7 @@ import { usePlayer } from '../context/PlayerContext';
 import { useNavigate } from '../context/NavigationContext';
 import { youtubeScraperService } from '../services/youtubeScraper';
 import { PlaylistPickerModal } from './PlaylistPickerModal';
+import { LoadingIndicator } from './LoadingIndicator';
 
 export const ArtistPage = () => {
   const { subPage, navigateBack } = useNavigate();
@@ -142,7 +143,7 @@ export const ArtistPage = () => {
 
       {loading ? (
         <div className="text-center text-on-surface-variant py-8">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
+          <LoadingIndicator size="lg" className="mx-auto" />
           <p className="mt-4">Loading songs...</p>
         </div>
       ) : songs.length === 0 && !error ? (
@@ -156,7 +157,6 @@ export const ArtistPage = () => {
               style={{ animationDelay: `${i * 0.04}s`, animationFillMode: 'backwards' }}
               onClick={() => handlePlaySong(song)}
             >
-              <span className="text-outline w-6 text-center">{i + 1}</span>
               <img src={song.thumbnail} alt="" className="w-12 h-12 rounded object-cover" />
               <div className="flex-1 min-w-0">
                 <p className="text-on-surface font-medium truncate">{song.title}</p>

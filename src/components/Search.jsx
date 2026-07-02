@@ -4,6 +4,7 @@ import { usePlayer } from '../context/PlayerContext';
 import { useNavigate } from '../context/NavigationContext';
 import { youtubeScraperService } from '../services/youtubeScraper';
 import { PlaylistPickerModal } from './PlaylistPickerModal';
+import { LoadingIndicator } from './LoadingIndicator';
 
 export const Search = ({ searchQuery, setSearchQuery }) => {
   const [results, setResults] = useState({ songs: [], albums: [], playlists: [] });
@@ -72,7 +73,7 @@ export const Search = ({ searchQuery, setSearchQuery }) => {
     <div className="p-6 animate-fadeIn">
       {loading && (
         <div className="text-center text-on-surface-variant py-8">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
+          <LoadingIndicator size="lg" className="mx-auto" />
           <p className="mt-4">Searching...</p>
         </div>
       )}
@@ -112,13 +113,14 @@ export const Search = ({ searchQuery, setSearchQuery }) => {
         <div className="space-y-2">
           {results.songs.map((song, i) => (
             <div key={song.videoId} className="flex items-center gap-4 p-3 bg-surface-container/50 rounded-xl hover:bg-surface-container transition-colors group animate-slideUp" style={{ animationDelay: `${i * 0.04}s`, animationFillMode: 'backwards' }}>
-              <span className="text-outline w-6 text-center">{i + 1}</span>
               <img src={song.thumbnail} alt="" className="w-12 h-12 rounded object-cover" />
               <div className="flex-1 min-w-0">
                 <p className="font-medium truncate text-on-surface">{song.title}</p>
-                <p onClick={e => { e.stopPropagation(); openArtist(song.channelTitle, song.channelId, song.thumbnail) }}
-                   className="text-sm text-on-surface-variant truncate hover:text-on-surface cursor-pointer">
-                  {song.channelTitle}
+                <p className="text-sm text-on-surface-variant truncate">
+                  <span onClick={e => { e.stopPropagation(); openArtist(song.channelTitle, song.channelId, song.thumbnail) }}
+                     className="cursor-pointer hover:text-on-surface">
+                    {song.channelTitle}
+                  </span>
                 </p>
               </div>
               <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -140,9 +142,11 @@ export const Search = ({ searchQuery, setSearchQuery }) => {
                  className="bg-surface-container/50 rounded-xl p-4 cursor-pointer hover:bg-surface-container transition-colors hover:scale-[1.02] animate-scaleIn" style={{ animationDelay: `${i * 0.06}s`, animationFillMode: 'backwards' }}>
               <img src={album.thumbnail} alt="" className="w-full aspect-square rounded-lg object-cover mb-3" />
               <p className="text-on-surface font-medium truncate">{album.title}</p>
-              <p onClick={e => { e.stopPropagation(); openArtist(album.channelTitle, album.channelId, album.thumbnail) }}
-                 className="text-on-surface-variant text-sm truncate hover:text-on-surface cursor-pointer">
-                {album.channelTitle}
+              <p className="text-on-surface-variant text-sm truncate">
+                <span onClick={e => { e.stopPropagation(); openArtist(album.channelTitle, album.channelId, album.thumbnail) }}
+                   className="cursor-pointer hover:text-on-surface">
+                  {album.channelTitle}
+                </span>
               </p>
             </div>
           ))}

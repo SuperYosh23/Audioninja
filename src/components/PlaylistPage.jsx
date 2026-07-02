@@ -7,10 +7,12 @@ import { youtubeScraperService } from '../services/youtubeScraper';
 
 export const PlaylistPage = () => {
   const { subPage, navigate, navigateBack } = useNavigate();
-  const { playSong, setQueueSongs, currentSong } = usePlayer();
+  const { playSong, setQueueSongs, currentSong, setRepeat, setShuffle } = usePlayer();
   const [playlist, setPlaylist] = useState(null);
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState('');
+  const dragIndexRef = useRef(null);
+  const [dragOverIndex, setDragOverIndex] = useState(null);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -34,11 +36,17 @@ export const PlaylistPage = () => {
     navigate({ type: 'artist', params: { name, artistId: browseId, thumbnail: thumb } });
 
   const handlePlayAll = () => {
-    if (playlist.songs.length > 0) setQueueSongs(playlist.songs, 0);
+    if (playlist.songs.length > 0) {
+      setShuffle(false);
+      setRepeat('all');
+      setQueueSongs(playlist.songs, 0);
+    }
   };
 
   const handleShuffle = () => {
     if (playlist.songs.length > 0) {
+      setShuffle(true);
+      setRepeat('all');
       const s = [...playlist.songs].sort(() => Math.random() - 0.5);
       setQueueSongs(s, 0);
     }
@@ -164,7 +172,7 @@ export const PlaylistPage = () => {
             </button>
             <button
               onClick={handleDelete}
-              className="p-2 bg-primary/50 text-on-surface rounded-full hover:bg-primary"
+              className="p-2 bg-red-700 text-white rounded-full hover:bg-red-800"
               title="Delete"
             >
               <Trash2 size={18} />
@@ -180,21 +188,39 @@ export const PlaylistPage = () => {
           playlist.songs.map((song, i) => (
             <div
               key={song.videoId}
+              draggable
+              onDragStart={() => { dragIndexRef.current = i; setDragOverIndex(i); }}
+              onDragOver={(e) => { e.preventDefault(); setDragOverIndex(i); }}
+              onDrop={() => {
+                const from = dragIndexRef.current;
+                if (from !== null && from !== i) {
+                  playlistUtils.reorderPlaylistSongs(playlist.id, from, i);
+                  const updated = storage.getPlaylists().find(p => p.id === playlist.id);
+                  setPlaylist(updated);
+                }
+                dragIndexRef.current = null;
+                setDragOverIndex(null);
+              }}
+              onDragEnd={() => {
+                dragIndexRef.current = null;
+                setDragOverIndex(null);
+              }}
               className={`flex items-center gap-4 p-3 rounded-xl transition-colors group cursor-pointer animate-slideUp ${
                 currentSong?.videoId === song.videoId ? 'bg-primary/20' : 'bg-surface-container/50 hover:bg-surface-container'
-              }`}
+              } ${dragOverIndex === i ? 'ring-2 ring-primary' : ''}`}
               style={{ animationDelay: `${i * 0.04}s`, animationFillMode: 'backwards' }}
               onClick={() => handlePlaySong(song)}
             >
-              <span className="text-outline w-6 text-center">{i + 1}</span>
               <img src={song.thumbnail} alt="" className="w-12 h-12 rounded object-cover" />
               <div className="flex-1 min-w-0">
                 <p className="text-on-surface font-medium truncate">{song.title}</p>
-                <p
-                  onClick={e => { e.stopPropagation(); openArtist(song.channelTitle, song.channelId, song.thumbnail); }}
-                  className="text-on-surface-variant text-sm truncate hover:text-on-surface cursor-pointer"
-                >
-                  {song.channelTitle}
+                <p className="text-on-surface-variant text-sm truncate">
+                  <span
+                    onClick={e => { e.stopPropagation(); openArtist(song.channelTitle, song.channelId, song.thumbnail); }}
+                    className="cursor-pointer hover:text-on-surface"
+                  >
+                    {song.channelTitle}
+                  </span>
                 </p>
               </div>
               <span className="text-outline text-sm">

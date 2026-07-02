@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Settings as SettingsIcon, Moon, Sun, Download, Upload, Trash2, Check, Image as ImageIcon, Palette, RotateCcw } from 'lucide-react';
+import { Settings as SettingsIcon, Moon, Sun, Download, Upload, Trash2, Check, Image as ImageIcon, Palette, RotateCcw, ChevronDown } from 'lucide-react';
 import { storage } from '../utils/storage';
 import { extractColorsFromImage, generatePaletteFromSource, applyTheme, loadTheme, applyCurrentTheme, resetTheme } from '../utils/colorScheme';
 
@@ -182,7 +182,7 @@ export const Settings = () => {
             </button>
             <button
               onClick={() => importRef.current?.click()}
-              className="flex items-center gap-2 px-4 py-2 bg-primary text-on-surface rounded-lg hover:bg-primary/80 transition-all hover:scale-105 active:scale-95"
+              className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-all hover:scale-105 active:scale-95"
             >
               <Upload size={18} />
               Import Data
@@ -194,7 +194,7 @@ export const Settings = () => {
                   window.location.reload();
                 }
               }}
-              className="flex items-center gap-2 px-4 py-2 bg-primary text-on-surface rounded-lg hover:bg-primary/80 transition-all hover:scale-105 active:scale-95"
+              className="flex items-center gap-2 px-4 py-2 bg-red-700 text-white rounded-lg hover:bg-red-800 transition-all hover:scale-105 active:scale-95"
             >
               <Trash2 size={18} />
               Clear All Data
@@ -225,9 +225,7 @@ export const Settings = () => {
               <Palette size={20} />
               Theme Customization
             </h3>
-            <span className={`text-on-surface-variant transition-transform ${showThemeSection ? 'rotate-180' : ''}`}>
-              ▼
-            </span>
+            <ChevronDown size={20} className={`text-on-surface-variant transition-transform ${showThemeSection ? 'rotate-180' : ''}`} />
           </button>
 
           {showThemeSection && (

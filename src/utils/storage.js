@@ -82,6 +82,20 @@ export const playlistUtils = {
     return null;
   },
 
+  reorderPlaylistSongs: (playlistId, fromIndex, toIndex) => {
+    const playlists = storage.getPlaylists();
+    const playlist = playlists.find(p => p.id === playlistId);
+    if (playlist) {
+      const [moved] = playlist.songs.splice(fromIndex, 1);
+      playlist.songs.splice(toIndex, 0, moved);
+      playlist.updatedAt = new Date().toISOString();
+      storage.savePlaylists(playlists);
+      window.dispatchEvent(new Event('playlists-changed'));
+      return playlist;
+    }
+    return null;
+  },
+
   removeSongFromPlaylist: (playlistId, songId) => {
     const playlists = storage.getPlaylists();
     const playlist = playlists.find(p => p.id === playlistId);

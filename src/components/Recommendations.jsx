@@ -5,6 +5,7 @@ import { useNavigate } from '../context/NavigationContext';
 import { storage } from '../utils/storage';
 import { youtubeScraperService } from '../services/youtubeScraper';
 import { PlaylistPickerModal } from './PlaylistPickerModal';
+import { LoadingIndicator } from './LoadingIndicator';
 
 export const Recommendations = () => {
   const [recommendations, setRecommendations] = useState([]);
@@ -88,7 +89,7 @@ export const Recommendations = () => {
 
       {loading ? (
         <div className="text-center text-on-surface-variant py-8">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <LoadingIndicator size="lg" className="mx-auto" />
           <p className="mt-4">Loading recommendations...</p>
         </div>
       ) : (
@@ -156,7 +157,6 @@ export const Recommendations = () => {
                     style={{ animationDelay: `${index * 0.04}s`, animationFillMode: 'backwards' }}
                     onClick={() => handlePlayHistorySong(song)}
                   >
-                    <span className="text-outline w-6 text-center">{index + 1}</span>
                     <img
                       src={song.thumbnail}
                       alt={song.title}
@@ -164,11 +164,13 @@ export const Recommendations = () => {
                     />
                     <div className="flex-1 min-w-0">
                       <h4 className="font-medium text-on-surface truncate">{song.title}</h4>
-                      <p
-                        onClick={e => { e.stopPropagation(); navigate({ type: 'artist', params: { name: song.channelTitle, artistId: song.channelId || '', thumbnail: song.thumbnail || '' } }); }}
-                        className="text-sm text-on-surface-variant truncate hover:text-on-surface cursor-pointer"
-                      >
-                        {song.channelTitle}
+                      <p className="text-sm text-on-surface-variant truncate">
+                        <span
+                          onClick={e => { e.stopPropagation(); navigate({ type: 'artist', params: { name: song.channelTitle, artistId: song.channelId || '', thumbnail: song.thumbnail || '' } }); }}
+                          className="cursor-pointer hover:text-on-surface"
+                        >
+                          {song.channelTitle}
+                        </span>
                       </p>
                     </div>
                     <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
