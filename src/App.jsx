@@ -64,19 +64,19 @@ function App() {
   };
 
   return (
-    <div className={`h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black text-white flex flex-col ${playerExpanded ? 'overflow-hidden' : ''}`}>
+    <div className={`h-screen bg-surface-dim text-on-surface flex flex-col ${playerExpanded ? 'overflow-hidden' : ''}`}>
       {/* Top search bar */}
-      <div className="bg-gray-900/95 border-b border-gray-700">
+      <div className="bg-surface-container border-b border-outline-variant">
         <div className="px-4 py-2.5 flex justify-center">
           <form onSubmit={handleSearch} className="relative w-full max-w-xl">
-            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-outline" size={18} />
             <input
               ref={searchRef}
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder='Search for songs, albums...'
-              className="w-full pl-10 pr-4 py-2 bg-gray-800 text-white text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-red-500"
+              className="w-full pl-10 pr-4 py-2 bg-surface-container text-on-surface text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </form>
         </div>
@@ -85,7 +85,7 @@ function App() {
       {/* Sidebar + Main content */}
       <div className="flex flex-1 min-h-0">
         <Sidebar activeTab={activeTab} onTabChange={handleTabChange} onNavigate={() => setPlayerExpanded(false)} />
-        <main className="flex-1 relative" style={{ overflow: (playerExpanded || keepExpanded) ? 'hidden' : 'auto', paddingBottom: (playerExpanded || keepExpanded) ? 0 : undefined }}>
+        <main className="flex-1 relative" style={{ overflow: (playerExpanded || keepExpanded) ? 'hidden' : 'auto', paddingBottom: (playerExpanded || keepExpanded) ? 0 : '6rem' }}>
           <div>
             {renderMain()}
           </div>

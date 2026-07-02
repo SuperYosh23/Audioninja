@@ -37,20 +37,20 @@ export const Sidebar = ({ activeTab, onTabChange, onNavigate }) => {
   };
 
   return (
-    <div className={`bg-gray-900 border-r border-gray-700 flex flex-col overflow-hidden transition-all duration-300 ease-in-out ${collapsed ? 'w-16' : 'w-56'}`}>
+    <div className={`bg-surface-container-high border-r border-outline-variant flex flex-col overflow-hidden transition-all duration-300 ease-in-out ${collapsed ? 'w-16' : 'w-56'}`}>
       {/* Header */}
-      <div className={`flex items-center border-b border-gray-700 min-h-16 ${collapsed ? 'justify-center px-2' : 'gap-2 px-4'}`}>
+      <div className={`flex items-center border-b border-outline-variant min-h-16 ${collapsed ? 'justify-center px-2' : 'gap-2 px-4'}`}>
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="shrink-0 p-1.5 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
+          className="shrink-0 p-1.5 text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-lg transition-colors"
           title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={16} />}
         </button>
         {!collapsed && (
           <div className="flex items-center gap-2">
-            <Play className="text-red-600 shrink-0" size={24} />
-            <span className="text-base font-bold whitespace-nowrap" style={{ fontFamily: "system-ui, 'Segoe UI', Roboto, sans-serif" }}>audio<span className="text-red-600">NINJA</span></span>
+            <Play className="text-primary shrink-0" size={24} />
+            <span className="text-base font-bold whitespace-nowrap" style={{ fontFamily: "system-ui, 'Segoe UI', Roboto, sans-serif" }}>audio<span className="text-primary">NINJA</span></span>
           </div>
         )}
       </div>
@@ -69,8 +69,8 @@ export const Sidebar = ({ activeTab, onTabChange, onNavigate }) => {
                   : 'gap-3 px-3'
               } ${
                 activeTab === item.id
-                  ? 'bg-red-600/20 text-red-400'
-                  : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                  ? 'bg-primary/20 text-primary'
+                  : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
               }`}
               title={collapsed ? item.label : undefined}
             >
@@ -82,16 +82,16 @@ export const Sidebar = ({ activeTab, onTabChange, onNavigate }) => {
       </nav>
 
       {/* Playlists section */}
-      <div className="flex-1 flex flex-col min-h-0 border-t border-gray-700 pt-3">
+      <div className="flex-1 flex flex-col min-h-0 border-t border-outline-variant pt-3">
         {!collapsed && (
           <>
             <div className="flex items-center justify-between px-4 mb-2">
-              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              <h3 className="text-xs font-semibold text-outline uppercase tracking-wider">
                 Playlists
               </h3>
               <button
                 onClick={() => setShowCreate(true)}
-                className="shrink-0 p-1 text-gray-400 hover:text-white hover:bg-gray-800 rounded transition-colors"
+                className="shrink-0 p-1 text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded transition-colors"
                 title="Create playlist"
               >
                 <Plus size={16} />
@@ -103,7 +103,7 @@ export const Sidebar = ({ activeTab, onTabChange, onNavigate }) => {
                   value={newName}
                   onChange={e => setNewName(e.target.value)}
                   placeholder="Name..."
-                  className="flex-1 px-2 py-1 bg-gray-800 text-white text-xs rounded focus:outline-none focus:ring-1 focus:ring-red-500"
+                  className="flex-1 px-2 py-1 bg-surface-container text-on-surface text-xs rounded focus:outline-none focus:ring-1 focus:ring-primary"
                   onKeyDown={e => { if (e.key === 'Enter') handleCreate(); if (e.key === 'Escape') setShowCreate(false) }}
                   autoFocus
                 />
@@ -115,7 +115,7 @@ export const Sidebar = ({ activeTab, onTabChange, onNavigate }) => {
         <div className={`flex-1 overflow-y-auto ${collapsed ? 'px-1' : 'px-2'} space-y-0.5`}>
           {playlists.length === 0 ? (
             !collapsed && (
-              <p className="text-gray-600 text-xs text-center py-4">
+              <p className="text-outline text-xs text-center py-4">
                 No playlists yet
               </p>
             )
@@ -126,7 +126,7 @@ export const Sidebar = ({ activeTab, onTabChange, onNavigate }) => {
                 <button
                   key={pl.id}
                   onClick={() => handlePlaylistClick(pl)}
-                  className={`w-full flex items-center py-2 rounded-lg hover:bg-gray-800 transition-colors group ${
+                  className={`w-full flex items-center py-2 rounded-lg hover:bg-surface-container transition-colors group ${
                     collapsed ? 'justify-center' : 'gap-3 px-3 text-left'
                   }`}
                   title={collapsed ? pl.name : undefined}
@@ -134,14 +134,14 @@ export const Sidebar = ({ activeTab, onTabChange, onNavigate }) => {
                   {thumb ? (
                     <img src={thumb} alt="" className={`${collapsed ? 'w-8 h-8' : 'w-6 h-6'} rounded object-cover shrink-0`} />
                   ) : (
-                    <div className={`${collapsed ? 'w-8 h-8' : 'w-6 h-6'} rounded bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center shrink-0`}>
-                      <Music size={collapsed ? 16 : 12} className="text-white" />
+                    <div className={`${collapsed ? 'w-8 h-8' : 'w-6 h-6'} rounded bg-gradient-to-br from-primary to-primary-container flex items-center justify-center shrink-0`}>
+                      <Music size={collapsed ? 16 : 12} className="text-on-surface" />
                     </div>
                   )}
                   {!collapsed && (
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-gray-300 truncate group-hover:text-white">{pl.name}</p>
-                      <p className="text-xs text-gray-600">{pl.songs.length} songs</p>
+                      <p className="text-sm text-on-surface truncate group-hover:text-on-surface">{pl.name}</p>
+                      <p className="text-xs text-outline">{pl.songs.length} songs</p>
                     </div>
                   )}
                 </button>

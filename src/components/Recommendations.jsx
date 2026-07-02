@@ -9,7 +9,7 @@ import { PlaylistPickerModal } from './PlaylistPickerModal';
 export const Recommendations = () => {
   const [recommendations, setRecommendations] = useState([]);
   const [recentHistory, setRecentHistory] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [pickerSong, setPickerSong] = useState(null);
   const { playSong } = usePlayer();
@@ -75,72 +75,67 @@ export const Recommendations = () => {
 
   return (
     <div className="p-6 animate-fadeIn">
-      <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+      <h2 className="text-2xl font-bold text-on-surface mb-6 flex items-center gap-2">
         <Sparkles size={24} />
         For You
       </h2>
 
       {error && (
-        <div className="bg-red-900/40 border border-red-700 rounded-lg p-4 mb-6 text-red-200 text-sm">
+        <div className="bg-error-container/30 border border-error rounded-lg p-4 mb-6 text-on-error-container text-sm">
           {error}
         </div>
       )}
 
       {loading ? (
-        <div className="text-center text-gray-400 py-8">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto"></div>
+        <div className="text-center text-on-surface-variant py-8">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
           <p className="mt-4">Loading recommendations...</p>
         </div>
       ) : (
         <>
           {recommendations.length > 0 && (
             <div className="mb-8">
-              <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-2 animate-slideUp">
+              <h3 className="text-xl font-semibold text-on-surface mb-4 flex items-center gap-2 animate-slideUp">
                 <Music size={20} />
                 Recommended For You
               </h3>
-              <div className="grid gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                 {recommendations.map((song, index) => (
                   <div
                     key={song.videoId}
-                    className="flex items-center gap-4 p-3 bg-gray-800/50 rounded-lg hover:bg-gray-800 transition-colors group cursor-pointer animate-slideUp"
+                    className="bg-surface-container/50 rounded-xl p-3 cursor-pointer hover:bg-surface-container transition-all hover:scale-[1.02] group animate-slideUp"
                     style={{ animationDelay: `${index * 0.04}s`, animationFillMode: 'backwards' }}
                     onClick={() => handlePlaySong(song)}
                   >
-                    <span className="text-gray-500 w-6 text-center">{index + 1}</span>
-                    <img
-                      src={song.thumbnail}
-                      alt={song.title}
-                      className="w-12 h-12 rounded object-cover"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-white truncate">{song.title}</h4>
-                      <p
-                        onClick={e => { e.stopPropagation(); navigate({ type: 'artist', params: { name: song.channelTitle, artistId: song.channelId || '', thumbnail: song.thumbnail || '' } }); }}
-                        className="text-sm text-gray-400 truncate hover:text-white cursor-pointer"
-                      >
-                        {song.channelTitle}
-                      </p>
+                    <div className="relative">
+                      <img
+                        src={song.thumbnail}
+                        alt={song.title}
+                        className="w-full aspect-square rounded-lg object-cover mb-3"
+                      />
+                      <div className="absolute inset-0 bg-black/40 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handlePlaySong(song); }}
+                          className="p-3 bg-primary text-on-surface rounded-full hover:bg-primary/80 transition-colors shadow-lg"
+                        >
+                          <Play size={24} />
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setPickerSong(song); }}
+                          className="p-3 bg-surface-container-high text-on-surface rounded-full hover:bg-surface-container-highest transition-colors shadow-lg"
+                          title="Add to playlist"
+                        >
+                          <Plus size={20} />
+                        </button>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handlePlaySong(song);
-                        }}
-                        className="p-2 bg-green-600 text-white rounded-full hover:bg-green-700 transition-colors"
-                        title="Play"
-                      >
-                        <Play size={14} />
-                      </button>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setPickerSong(song); }}
-                        className="p-2 bg-gray-700 text-white rounded-full hover:bg-gray-600 transition-colors"
-                        title="Add to playlist"
-                      >
-                        <Plus size={14} />
-                      </button>
-                    </div>
+                    <h4 className="text-on-surface font-medium truncate">{song.title}</h4>
+                    <p
+                      onClick={e => { e.stopPropagation(); navigate({ type: 'artist', params: { name: song.channelTitle, artistId: song.channelId || '', thumbnail: song.thumbnail || '' } }); }}
+                      className="text-sm text-on-surface-variant truncate hover:text-on-surface cursor-pointer"
+                    >
+                      {song.channelTitle}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -149,7 +144,7 @@ export const Recommendations = () => {
 
           {recentHistory.length > 0 && (
             <div>
-              <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-2 animate-slideUp">
+              <h3 className="text-xl font-semibold text-on-surface mb-4 flex items-center gap-2 animate-slideUp">
                 <Clock size={20} />
                 Recently Played
               </h3>
@@ -157,21 +152,21 @@ export const Recommendations = () => {
                 {recentHistory.map((song, index) => (
                   <div
                     key={song.videoId}
-                    className="flex items-center gap-4 p-3 bg-gray-800/50 rounded-lg hover:bg-gray-800 transition-colors group cursor-pointer animate-slideUp"
+                    className="flex items-center gap-4 p-3 bg-surface-container/50 rounded-xl hover:bg-surface-container transition-colors group cursor-pointer animate-slideUp"
                     style={{ animationDelay: `${index * 0.04}s`, animationFillMode: 'backwards' }}
                     onClick={() => handlePlayHistorySong(song)}
                   >
-                    <span className="text-gray-500 w-6 text-center">{index + 1}</span>
+                    <span className="text-outline w-6 text-center">{index + 1}</span>
                     <img
                       src={song.thumbnail}
                       alt={song.title}
                       className="w-12 h-12 rounded object-cover"
                     />
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-white truncate">{song.title}</h4>
+                      <h4 className="font-medium text-on-surface truncate">{song.title}</h4>
                       <p
                         onClick={e => { e.stopPropagation(); navigate({ type: 'artist', params: { name: song.channelTitle, artistId: song.channelId || '', thumbnail: song.thumbnail || '' } }); }}
-                        className="text-sm text-gray-400 truncate hover:text-white cursor-pointer"
+                        className="text-sm text-on-surface-variant truncate hover:text-on-surface cursor-pointer"
                       >
                         {song.channelTitle}
                       </p>
@@ -182,14 +177,14 @@ export const Recommendations = () => {
                           e.stopPropagation();
                           handlePlayHistorySong(song, index);
                         }}
-                        className="p-2 bg-green-600 text-white rounded-full hover:bg-green-700 transition-colors"
+                        className="p-2 bg-primary text-on-surface rounded-full hover:bg-primary/80 transition-colors"
                         title="Play"
                       >
                         <Play size={14} />
                       </button>
                       <button
                         onClick={(e) => { e.stopPropagation(); setPickerSong(song); }}
-                        className="p-2 bg-gray-700 text-white rounded-full hover:bg-gray-600 transition-colors"
+                        className="p-2 bg-surface-container-high text-on-surface rounded-full hover:bg-surface-container-highest transition-colors"
                         title="Add to playlist"
                       >
                         <Plus size={14} />
@@ -202,7 +197,7 @@ export const Recommendations = () => {
           )}
 
           {!loading && recommendations.length === 0 && recentHistory.length === 0 && (
-            <div className="text-center text-gray-400 py-12">
+            <div className="text-center text-on-surface-variant py-12">
               <Sparkles size={48} className="mx-auto mb-4 opacity-50" />
               <p className="text-lg mb-2">No recommendations yet</p>
               <p className="text-sm">Start listening to music to get personalized recommendations!</p>

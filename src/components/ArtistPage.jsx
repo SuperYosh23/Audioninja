@@ -69,7 +69,7 @@ export const ArtistPage = () => {
     <div className="p-6 animate-fadeIn">
       <button
         onClick={navigateBack}
-        className="flex items-center gap-2 text-gray-400 hover:text-white mb-6 transition-colors"
+        className="flex items-center gap-2 text-on-surface-variant hover:text-on-surface mb-6 transition-colors"
       >
         <ArrowLeft size={20} />
         Back
@@ -81,24 +81,24 @@ export const ArtistPage = () => {
             <img src={thumbnail} alt={artist.name} className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
-              <Music size={48} className="text-white/60" />
+              <Music size={48} className="text-on-surface/60" />
             </div>
           )}
         </div>
         <div className="flex-1 min-w-0">
-          <h1 className="text-3xl font-bold text-white mb-2">{artist.name}</h1>
-          <p className="text-gray-400">{songs.length} songs</p>
+          <h1 className="text-3xl font-bold text-on-surface mb-2">{artist.name}</h1>
+          <p className="text-on-surface-variant">{songs.length} songs</p>
           <div className="flex gap-3 mt-4">
             <button
               onClick={handlePlayAll}
-              className="flex items-center gap-2 px-6 py-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors"
+              className="flex items-center gap-2 px-6 py-2 bg-primary text-on-surface rounded-full hover:bg-primary/80 transition-colors"
             >
               <Play size={18} />
               Play All
             </button>
             <button
               onClick={handleShuffle}
-              className="flex items-center gap-2 px-6 py-2 bg-gray-700 text-white rounded-full hover:bg-gray-600 transition-colors"
+              className="flex items-center gap-2 px-6 py-2 bg-surface-container-high text-on-surface rounded-full hover:bg-surface-container-highest transition-colors"
             >
               <Shuffle size={18} />
               Shuffle
@@ -110,7 +110,7 @@ export const ArtistPage = () => {
 
       {albums.length > 0 && (
         <div className="mb-8 animate-slideUp">
-          <h2 className="text-xl font-bold text-white mb-4">Albums</h2>
+          <h2 className="text-xl font-bold text-on-surface mb-4">Albums</h2>
           <div className="flex gap-4 overflow-x-auto pb-4">
             {albums.map((album, i) => (
               <div
@@ -124,57 +124,57 @@ export const ArtistPage = () => {
                   alt={album.title}
                   className="w-40 h-40 rounded-lg object-cover mb-2"
                 />
-                <p className="text-white text-sm font-medium truncate">{album.title}</p>
-                <p className="text-gray-400 text-xs">{album.videoCount} videos</p>
+                <p className="text-on-surface text-sm font-medium truncate">{album.title}</p>
+                <p className="text-on-surface-variant text-xs">{album.videoCount} videos</p>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      <h2 className="text-xl font-bold text-white mb-4">Songs</h2>
+      <h2 className="text-xl font-bold text-on-surface mb-4">Songs</h2>
 
       {error && (
-        <div className="bg-red-900/40 border border-red-700 rounded-lg p-4 mb-6 text-red-200 text-sm">
+        <div className="bg-error-container/30 border border-error rounded-lg p-4 mb-6 text-on-error-container text-sm">
           {error}
         </div>
       )}
 
       {loading ? (
-        <div className="text-center text-gray-400 py-8">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto" />
+        <div className="text-center text-on-surface-variant py-8">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
           <p className="mt-4">Loading songs...</p>
         </div>
       ) : songs.length === 0 && !error ? (
-        <p className="text-gray-400 text-center py-8">No songs found</p>
+        <p className="text-on-surface-variant text-center py-8">No songs found</p>
       ) : (
         <div className="space-y-2">
           {songs.map((song, i) => (
             <div
               key={song.videoId}
-              className="flex items-center gap-4 p-3 bg-gray-800/50 rounded-lg hover:bg-gray-800 transition-colors group cursor-pointer animate-slideUp"
+              className="flex items-center gap-4 p-3 bg-surface-container/50 rounded-xl hover:bg-surface-container transition-colors group cursor-pointer animate-slideUp"
               style={{ animationDelay: `${i * 0.04}s`, animationFillMode: 'backwards' }}
               onClick={() => handlePlaySong(song)}
             >
-              <span className="text-gray-500 w-6 text-center">{i + 1}</span>
+              <span className="text-outline w-6 text-center">{i + 1}</span>
               <img src={song.thumbnail} alt="" className="w-12 h-12 rounded object-cover" />
               <div className="flex-1 min-w-0">
-                <p className="text-white font-medium truncate">{song.title}</p>
-                <p className="text-gray-400 text-sm truncate">{song.channelTitle}</p>
+                <p className="text-on-surface font-medium truncate">{song.title}</p>
+                <p className="text-on-surface-variant text-sm truncate">{song.channelTitle}</p>
               </div>
-              <span className="text-gray-500 text-sm">
+              <span className="text-outline text-sm">
                 {youtubeScraperService.formatDuration(song.duration)}
               </span>
               <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
                 <button
                   onClick={(e) => { e.stopPropagation(); handlePlaySong(song); }}
-                  className="p-2 bg-green-600 text-white rounded-full hover:bg-green-700 transition-colors"
+                  className="p-2 bg-primary text-on-surface rounded-full hover:bg-primary/80 transition-colors"
                 >
                   <Play size={14} />
                 </button>
                 <button
                   onClick={(e) => { e.stopPropagation(); setPickerSong(song); }}
-                  className="p-2 bg-gray-700 text-white rounded-full hover:bg-gray-600 transition-colors"
+                  className="p-2 bg-surface-container-high text-on-surface rounded-full hover:bg-surface-container-highest transition-colors"
                   title="Add to playlist"
                 >
                   <Plus size={14} />
