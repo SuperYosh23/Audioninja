@@ -6,7 +6,7 @@ import { storage, playlistUtils } from '../utils/storage';
 import { youtubeScraperService } from '../services/youtubeScraper';
 
 export const PlaylistPage = () => {
-  const { subPage, navigateBack } = useNavigate();
+  const { subPage, navigate, navigateBack } = useNavigate();
   const { playSong, setQueueSongs, currentSong } = usePlayer();
   const [playlist, setPlaylist] = useState(null);
   const [editing, setEditing] = useState(false);
@@ -29,6 +29,9 @@ export const PlaylistPage = () => {
       <p className="text-gray-400 text-center py-8">Playlist not found</p>
     </div>
   );
+
+  const openArtist = (name, browseId, thumb) =>
+    navigate({ type: 'artist', params: { name, artistId: browseId, thumbnail: thumb } });
 
   const handlePlayAll = () => {
     if (playlist.songs.length > 0) setQueueSongs(playlist.songs, 0);
@@ -187,7 +190,12 @@ export const PlaylistPage = () => {
               <img src={song.thumbnail} alt="" className="w-12 h-12 rounded object-cover" />
               <div className="flex-1 min-w-0">
                 <p className="text-white font-medium truncate">{song.title}</p>
-                <p className="text-gray-400 text-sm truncate">{song.channelTitle}</p>
+                <p
+                  onClick={e => { e.stopPropagation(); openArtist(song.channelTitle, song.channelId, song.thumbnail); }}
+                  className="text-gray-400 text-sm truncate hover:text-white cursor-pointer"
+                >
+                  {song.channelTitle}
+                </p>
               </div>
               <span className="text-gray-500 text-sm">
                 {youtubeScraperService.formatDuration(song.duration)}

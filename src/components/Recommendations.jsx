@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Music, Play, Clock, Sparkles, Plus } from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
+import { useNavigate } from '../context/NavigationContext';
 import { storage } from '../utils/storage';
 import { youtubeScraperService } from '../services/youtubeScraper';
 import { PlaylistPickerModal } from './PlaylistPickerModal';
@@ -12,6 +13,7 @@ export const Recommendations = () => {
   const [error, setError] = useState('');
   const [pickerSong, setPickerSong] = useState(null);
   const { playSong } = usePlayer();
+  const { navigate } = useNavigate();
 
   useEffect(() => {
     loadRecommendations();
@@ -25,12 +27,35 @@ export const Recommendations = () => {
       setRecentHistory(history.slice(0, 10));
 
       if (history.length > 0) {
-        const lastPlayed = history[0];
-        const query = lastPlayed.channelTitle || lastPlayed.title;
-        const relatedSongs = query
-          ? await youtubeScraperService.getRelatedVideos(query, 10)
-          : [];
-        setRecommendations(relatedSongs);
+        const artistCounts = {};
+        history.forEach(song => {
+          const artist = song.channelTitle || song.title;
+          if (artist) {
+            artistCounts[artist] = (artistCounts[artist] || 0) + 1;
+          }
+        });
+
+        const topArtists = Object.entries(artistCounts)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 5)
+          .map(([artist]) => artist);
+
+        const searches = topArtists.map(artist =>
+          youtubeScraperService.getRelatedVideos(artist, 4)
+        );
+        const searchResults = await Promise.all(searches);
+
+        const historyIds = new Set(history.map(s => s.videoId));
+        const seen = new Set();
+        const combined = searchResults.flat().filter(song => {
+          if (historyIds.has(song.videoId)) return false;
+          if (seen.has(song.videoId)) return false;
+          seen.add(song.videoId);
+          return true;
+        });
+
+        combined.sort(() => Math.random() - 0.5);
+        setRecommendations(combined.slice(0, 20));
       }
     } catch (err) {
       console.error('Failed to load recommendations:', err);
@@ -90,7 +115,12 @@ export const Recommendations = () => {
                     />
                     <div className="flex-1 min-w-0">
                       <h4 className="font-medium text-white truncate">{song.title}</h4>
-                      <p className="text-sm text-gray-400 truncate">{song.channelTitle}</p>
+                      <p
+                        onClick={e => { e.stopPropagation(); navigate({ type: 'artist', params: { name: song.channelTitle, artistId: song.channelId || '', thumbnail: song.thumbnail || '' } }); }}
+                        className="text-sm text-gray-400 truncate hover:text-white cursor-pointer"
+                      >
+                        {song.channelTitle}
+                      </p>
                     </div>
                     <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
@@ -139,7 +169,12 @@ export const Recommendations = () => {
                     />
                     <div className="flex-1 min-w-0">
                       <h4 className="font-medium text-white truncate">{song.title}</h4>
-                      <p className="text-sm text-gray-400 truncate">{song.channelTitle}</p>
+                      <p
+                        onClick={e => { e.stopPropagation(); navigate({ type: 'artist', params: { name: song.channelTitle, artistId: song.channelId || '', thumbnail: song.thumbnail || '' } }); }}
+                        className="text-sm text-gray-400 truncate hover:text-white cursor-pointer"
+                      >
+                        {song.channelTitle}
+                      </p>
                     </div>
                     <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
