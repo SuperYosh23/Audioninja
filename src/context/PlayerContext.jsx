@@ -39,6 +39,7 @@ export const PlayerProvider = ({ children }) => {
   const volumeRef = useRef(volume);
   const originalQueueRef = useRef([]);
   const shuffledIndicesRef = useRef([]);
+  const [playerInitKey, setPlayerInitKey] = useState(0);
 
   volumeRef.current = volume;
 
@@ -65,38 +66,65 @@ export const PlayerProvider = ({ children }) => {
 
   useEffect(() => {
     if (playerReady && !playerRef.current) {
-      playerRef.current = new window.YT.Player('hidden-player', {
-        height: '1',
-        width: '1',
-        videoId: '',
-        playerVars: {
-          autoplay: 0,
-          controls: 0,
-          disablekb: 1,
-          fs: 0,
-          modestbranding: 1,
-          playsinline: 1,
-          rel: 0,
-        },
-        events: {
-          onReady: () => {
-            if (playerRef.current) {
-              playerRef.current.setVolume(volumeRef.current * 100);
-            }
+      try {
+        playerRef.current = new window.YT.Player('hidden-player', {
+          height: '1',
+          width: '1',
+          videoId: '',
+          playerVars: {
+            autoplay: 1,
+            controls: 0,
+            disablekb: 1,
+            fs: 0,
+            modestbranding: 1,
+            playsinline: 1,
+            rel: 0,
+            enablejsapi: 1,
           },
-          onStateChange: (event) => {
-            if (event.data === window.YT.PlayerState.ENDED) {
-              playNextRef.current?.();
-            }
-            if (event.data === window.YT.PlayerState.PLAYING) {
-              const dur = playerRef.current?.getDuration?.();
-              if (dur > 0) setDuration(dur);
-            }
+          events: {
+            onReady: () => {
+              console.log('[Player] YT.Player ready');
+              if (playerRef.current) {
+                playerRef.current.setVolume(volumeRef.current * 100);
+              }
+            },
+            onStateChange: (event) => {
+              if (event.data === window.YT.PlayerState.ENDED) {
+                playNextRef.current?.();
+              }
+              if (event.data === window.YT.PlayerState.PLAYING) {
+                const dur = playerRef.current?.getDuration?.();
+                if (dur > 0) setDuration(dur);
+              }
+              if (event.data === window.YT.PlayerState.UNSTARTED) {
+                const err = playerRef.current?.getPlayerError?.();
+                if (err) console.error('[Player] Error:', err);
+              }
+            },
+            onError: (event) => {
+              console.error('[Player] onError:', event.data);
+            },
           },
-        },
-      });
+        });
+      } catch (err) {
+        console.error('[Player] Failed to create YT.Player:', err);
+        if (playerInitKey < 3) {
+          setTimeout(() => setPlayerInitKey(k => k + 1), 2000);
+        }
+      }
     }
-  }, [playerReady]);
+
+    return () => {
+      if (playerRef.current && typeof playerRef.current.destroy === 'function') {
+        try {
+          playerRef.current.destroy();
+        } catch (err) {
+          console.error('[Player] destroy failed:', err);
+        }
+        playerRef.current = null;
+      }
+    };
+  }, [playerReady, playerInitKey]);
 
   useEffect(() => {
     if (isPlaying && playerRef.current && playerReady) {
@@ -148,20 +176,30 @@ export const PlayerProvider = ({ children }) => {
     setProgress(0);
 
     if (playerRef.current && playerReady) {
-      playerRef.current.loadVideoById(song.videoId);
-      playerRef.current.setVolume(volume * 100);
+      try {
+        playerRef.current.loadVideoById(song.videoId);
+        playerRef.current.setVolume(volume * 100);
+      } catch (err) {
+        console.error('[Player] loadVideoById failed:', err);
+      }
+    } else {
+      console.warn('[Player] Not ready yet, cannot play');
     }
   };
 
   const togglePlay = () => {
     if (!playerRef.current || !playerReady) return;
 
-    if (isPlaying) {
-      playerRef.current.pauseVideo();
-      setIsPlaying(false);
-    } else {
-      playerRef.current.playVideo();
-      setIsPlaying(true);
+    try {
+      if (isPlaying) {
+        playerRef.current.pauseVideo();
+        setIsPlaying(false);
+      } else {
+        playerRef.current.playVideo();
+        setIsPlaying(true);
+      }
+    } catch (err) {
+      console.error('[Player] togglePlay failed:', err);
     }
   };
 
@@ -171,8 +209,12 @@ export const PlayerProvider = ({ children }) => {
     if (repeat === 'one') {
       setProgress(0);
       if (playerRef.current && playerReady) {
-        playerRef.current.seekTo(0, true);
-        playerRef.current.playVideo();
+        try {
+          playerRef.current.seekTo(0, true);
+          playerRef.current.playVideo();
+        } catch (err) {
+          console.error('[Player] seekTo/playVideo failed:', err);
+        }
       }
       return;
     }
@@ -184,7 +226,11 @@ export const PlayerProvider = ({ children }) => {
       setProgress(0);
 
       if (playerRef.current && playerReady) {
-        playerRef.current.loadVideoById(queue[nextIndex].videoId);
+        try {
+          playerRef.current.loadVideoById(queue[nextIndex].videoId);
+        } catch (err) {
+          console.error('[Player] loadVideoById failed:', err);
+        }
       }
     } else if (repeat === 'all') {
       setCurrentIndex(0);
@@ -192,7 +238,11 @@ export const PlayerProvider = ({ children }) => {
       setProgress(0);
 
       if (playerRef.current && playerReady) {
-        playerRef.current.loadVideoById(queue[0].videoId);
+        try {
+          playerRef.current.loadVideoById(queue[0].videoId);
+        } catch (err) {
+          console.error('[Player] loadVideoById failed:', err);
+        }
       }
     }
   }, [queue, currentIndex, repeat, playerReady]);
@@ -207,7 +257,11 @@ export const PlayerProvider = ({ children }) => {
       setProgress(0);
 
       if (playerRef.current && playerReady) {
-        playerRef.current.loadVideoById(queue[prevIndex].videoId);
+        try {
+          playerRef.current.loadVideoById(queue[prevIndex].videoId);
+        } catch (err) {
+          console.error('[Player] loadVideoById failed:', err);
+        }
       }
     }
   };
@@ -232,7 +286,11 @@ export const PlayerProvider = ({ children }) => {
     setProgress(0);
 
     if (playerRef.current && playerReady) {
-      playerRef.current.loadVideoById(videoId);
+      try {
+        playerRef.current.loadVideoById(videoId);
+      } catch (err) {
+        console.error('[Player] loadVideoById failed:', err);
+      }
     }
   };
 
@@ -259,7 +317,7 @@ export const PlayerProvider = ({ children }) => {
         setCurrentSong(null);
         setIsPlaying(false);
         if (playerRef.current) {
-          playerRef.current.stopVideo();
+          try { playerRef.current.stopVideo(); } catch (err) { console.error('[Player] stopVideo failed:', err); }
         }
       }
     } else if (index < currentIndex) {
@@ -276,21 +334,29 @@ export const PlayerProvider = ({ children }) => {
     setIsPlaying(false);
     setProgress(0);
     if (playerRef.current) {
-      playerRef.current.stopVideo();
+      try { playerRef.current.stopVideo(); } catch (err) { console.error('[Player] stopVideo failed:', err); }
     }
   };
 
   const seekTo = (time) => {
     setProgress(time);
     if (playerRef.current && playerReady) {
-      playerRef.current.seekTo(time, true);
+      try {
+        playerRef.current.seekTo(time, true);
+      } catch (err) {
+        console.error('[Player] seekTo failed:', err);
+      }
     }
   };
 
   const changeVolume = (newVolume) => {
     setVolume(newVolume);
     if (playerRef.current && playerReady) {
-      playerRef.current.setVolume(newVolume * 100);
+      try {
+        playerRef.current.setVolume(newVolume * 100);
+      } catch (err) {
+        console.error('[Player] setVolume failed:', err);
+      }
     }
   };
 
@@ -354,13 +420,14 @@ export const PlayerProvider = ({ children }) => {
       <div
         id="hidden-player"
         style={{
-          position: 'absolute',
-          top: '-9999px',
-          left: '-9999px',
+          position: 'fixed',
+          bottom: 0,
+          right: 0,
           width: '1px',
           height: '1px',
-          opacity: 0,
+          overflow: 'hidden',
           pointerEvents: 'none',
+          zIndex: -1,
         }}
       />
     </PlayerContext.Provider>
