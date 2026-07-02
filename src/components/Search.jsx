@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Search as SearchIcon, Music, User, Disc3, Clock, Plus } from 'lucide-react';
+import { Search as SearchIcon, Music, Play, User, Disc3, Clock, Plus } from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
 import { useNavigate } from '../context/NavigationContext';
 import { youtubeScraperService } from '../services/youtubeScraper';
 import { PlaylistPickerModal } from './PlaylistPickerModal';
 
 export const Search = ({ searchQuery, setSearchQuery }) => {
-  const [results, setResults] = useState({ songs: [], albums: [], artists: [], playlists: [] });
+  const [results, setResults] = useState({ songs: [], albums: [], playlists: [] });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('songs');
@@ -16,7 +16,7 @@ export const Search = ({ searchQuery, setSearchQuery }) => {
 
   useEffect(() => {
     if (!searchQuery.trim()) {
-      setResults({ songs: [], albums: [], artists: [], playlists: [] });
+      setResults({ songs: [], albums: [], playlists: [] });
       return
     }
     let cancelled = false
@@ -30,7 +30,7 @@ export const Search = ({ searchQuery, setSearchQuery }) => {
   }, [searchQuery])
 
   useEffect(() => {
-    const tabOrder = ['songs', 'albums', 'artists']
+    const tabOrder = ['songs', 'albums']
     if (!tabOrder.includes(activeTab) || results[activeTab]?.length === 0) {
       const first = tabOrder.find(t => (results[t]?.length || 0) > 0)
       if (first) setActiveTab(first)
@@ -57,14 +57,13 @@ export const Search = ({ searchQuery, setSearchQuery }) => {
   const tabs = [
     { id: 'songs', label: 'Songs', icon: Music, count: results.songs.length },
     { id: 'albums', label: 'Albums', icon: Disc3, count: results.albums.length },
-    { id: 'artists', label: 'Artists', icon: User, count: results.artists.length },
   ];
 
   if (!searchQuery.trim()) {
     return (
       <div className="p-6 text-center text-gray-500 py-20 animate-fadeIn">
         <Music size={48} className="mx-auto mb-4 opacity-30" />
-        <p className="text-lg">Search for music, albums, and artists</p>
+        <p className="text-lg">Search for music and albums</p>
       </div>
     )
   }
@@ -84,14 +83,14 @@ export const Search = ({ searchQuery, setSearchQuery }) => {
         </div>
       )}
 
-      {!loading && !error && !results.songs.length && !results.albums.length && !results.artists.length && (
+      {!loading && !error && !results.songs.length && !results.albums.length && (
         <div className="text-center text-gray-400 py-8">
           <SearchIcon size={48} className="mx-auto mb-4 opacity-50" />
           <p>No results found for "{searchQuery}"</p>
         </div>
       )}
 
-      {!loading && results.songs.length + results.albums.length + results.artists.length > 0 && (
+      {!loading && results.songs.length + results.albums.length > 0 && (
         <div className="flex gap-4 mb-6 border-b border-gray-700 pb-4 overflow-x-auto">
           {tabs.filter(t => t.count > 0).map(tab => (
             <button
@@ -123,7 +122,7 @@ export const Search = ({ searchQuery, setSearchQuery }) => {
                 </p>
               </div>
               <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button onClick={() => handlePlaySong(song)} className="p-2 bg-green-600 text-white rounded-full hover:bg-green-700" title="Play"><Music size={16} /></button>
+                <button onClick={() => handlePlaySong(song)} className="p-2 bg-green-600 text-white rounded-full hover:bg-green-700" title="Play"><Play size={16} /></button>
                 <button onClick={() => handleAddToQueue(song)} className="p-2 bg-gray-700 text-white rounded-full hover:bg-gray-600" title="Queue"><Clock size={16} /></button>
                 <button onClick={() => handleAddToPlaylist(song)} className="p-2 bg-gray-700 text-white rounded-full hover:bg-gray-600" title="Add to playlist"><Plus size={16} /></button>
                 <button onClick={() => openArtist(song.channelTitle, song.channelId, song.thumbnail)} className="p-2 bg-gray-700 text-white rounded-full hover:bg-gray-600" title="Artist"><User size={16} /></button>
@@ -145,22 +144,6 @@ export const Search = ({ searchQuery, setSearchQuery }) => {
                  className="text-gray-400 text-sm truncate hover:text-white cursor-pointer">
                 {album.channelTitle}
               </p>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Artists */}
-      {!loading && activeTab === 'artists' && results.artists.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-          {results.artists.map((artist, i) => (
-            <div key={artist.browseId} onClick={() => openArtist(artist.name, artist.browseId, artist.thumbnail)}
-                 className="bg-gray-800/50 rounded-lg p-4 cursor-pointer hover:bg-gray-800 transition-colors hover:scale-[1.02] text-center animate-scaleIn" style={{ animationDelay: `${i * 0.06}s`, animationFillMode: 'backwards' }}>
-              <div className="w-24 h-24 mx-auto mb-3 rounded-full overflow-hidden bg-gradient-to-br from-purple-600 to-purple-800">
-                {artist.thumbnail ? <img src={artist.thumbnail} alt="" className="w-full h-full object-cover" /> : <User size={36} className="text-white/60 mx-auto mt-6" />}
-              </div>
-              <p className="text-white font-medium truncate">{artist.name}</p>
-              <p className="text-gray-400 text-xs truncate">{artist.subscribers}</p>
             </div>
           ))}
         </div>

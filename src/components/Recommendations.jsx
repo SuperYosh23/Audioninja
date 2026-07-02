@@ -1,20 +1,17 @@
 import { useState, useEffect } from 'react';
-import { Music, Clock, TrendingUp, Sparkles, Plus } from 'lucide-react';
+import { Music, Play, Clock, Sparkles, Plus } from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
-import { useNavigate } from '../context/NavigationContext';
-import { storage, historyUtils } from '../utils/storage';
+import { storage } from '../utils/storage';
 import { youtubeScraperService } from '../services/youtubeScraper';
 import { PlaylistPickerModal } from './PlaylistPickerModal';
 
 export const Recommendations = () => {
   const [recommendations, setRecommendations] = useState([]);
-  const [topArtists, setTopArtists] = useState([]);
   const [recentHistory, setRecentHistory] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [pickerSong, setPickerSong] = useState(null);
-  const { playSong, setQueueSongs } = usePlayer();
-  const { navigate } = useNavigate();
+  const { playSong } = usePlayer();
 
   useEffect(() => {
     loadRecommendations();
@@ -25,8 +22,6 @@ export const Recommendations = () => {
     setError('');
     try {
       const history = storage.getListeningHistory();
-      const topArtistsList = historyUtils.getTopArtists(5);
-      setTopArtists(topArtistsList);
       setRecentHistory(history.slice(0, 10));
 
       if (history.length > 0) {
@@ -47,21 +42,6 @@ export const Recommendations = () => {
 
   const handlePlaySong = (song) => {
     playSong(song, recommendations);
-  };
-
-  const handlePlayArtist = async (artistName) => {
-    try {
-      const songs = await youtubeScraperService.getArtistVideos(artistName, 10);
-      if (songs.length > 0) {
-        setQueueSongs(songs, 0);
-      }
-    } catch (error) {
-      console.error('Failed to play artist:', error);
-    }
-  };
-
-  const handleViewArtist = (artist) => {
-    navigate({ type: 'artist', params: { name: artist.name, thumbnail: artist.thumbnail } });
   };
 
   const handlePlayHistorySong = (song) => {
@@ -88,47 +68,6 @@ export const Recommendations = () => {
         </div>
       ) : (
         <>
-          {topArtists.length > 0 && (
-            <div className="mb-8">
-              <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-2 animate-slideUp">
-                <TrendingUp size={20} />
-                Your Top Artists
-              </h3>
-              <div className="flex gap-4 overflow-x-auto pb-4">
-                {topArtists.map((artist, i) => (
-                  <div
-                    key={artist.name}
-                    className="flex-shrink-0 w-32 rounded-lg cursor-pointer animate-slideUp"
-                    style={{ animationDelay: `${i * 0.08}s`, animationFillMode: 'backwards' }}
-                  >
-                    <div
-                      onClick={() => handleViewArtist(artist)}
-                      className="p-4 bg-gradient-to-br from-purple-600 to-purple-800 rounded-lg hover:scale-105 transition-transform"
-                    >
-                      <div className="w-16 h-16 mx-auto mb-2 rounded-full overflow-hidden bg-white/20">
-                        {artist.thumbnail ? (
-                          <img src={artist.thumbnail} alt={artist.name} className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <span className="text-2xl font-bold text-white">{artist.name[0]}</span>
-                          </div>
-                        )}
-                      </div>
-                      <p className="text-white text-sm font-medium truncate text-center">{artist.name}</p>
-                      <p className="text-white/70 text-xs text-center">{artist.count} plays</p>
-                    </div>
-                    <button
-                      onClick={() => handlePlayArtist(artist.name)}
-                      className="mt-2 w-full px-3 py-1 bg-green-600 text-white text-xs rounded-full hover:bg-green-700 transition-colors"
-                    >
-                      Play
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
           {recommendations.length > 0 && (
             <div className="mb-8">
               <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-2 animate-slideUp">
@@ -162,7 +101,7 @@ export const Recommendations = () => {
                         className="p-2 bg-green-600 text-white rounded-full hover:bg-green-700 transition-colors"
                         title="Play"
                       >
-                        <Music size={14} />
+                        <Play size={14} />
                       </button>
                       <button
                         onClick={(e) => { e.stopPropagation(); setPickerSong(song); }}
@@ -211,7 +150,7 @@ export const Recommendations = () => {
                         className="p-2 bg-green-600 text-white rounded-full hover:bg-green-700 transition-colors"
                         title="Play"
                       >
-                        <Music size={14} />
+                        <Play size={14} />
                       </button>
                       <button
                         onClick={(e) => { e.stopPropagation(); setPickerSong(song); }}
@@ -227,7 +166,7 @@ export const Recommendations = () => {
             </div>
           )}
 
-          {!loading && recommendations.length === 0 && topArtists.length === 0 && recentHistory.length === 0 && (
+          {!loading && recommendations.length === 0 && recentHistory.length === 0 && (
             <div className="text-center text-gray-400 py-12">
               <Sparkles size={48} className="mx-auto mb-4 opacity-50" />
               <p className="text-lg mb-2">No recommendations yet</p>

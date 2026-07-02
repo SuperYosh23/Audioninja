@@ -1,6 +1,17 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { usePlayer } from '../context/PlayerContext';
-import { Play, Pause, SkipForward, SkipBack, Shuffle, Repeat, Repeat1, ChevronDown, Volume2, VolumeX } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, Shuffle, Repeat, Repeat1, ChevronDown, Volume2, VolumeX, Download } from 'lucide-react';
+
+function getBestThumbnail(url) {
+  if (!url) return url;
+  if (url.includes('i.ytimg.com')) {
+    return url.replace(/\/(hq|mq|sd)?default\.jpg$/, '/maxresdefault.jpg');
+  }
+  if (url.includes('lh3.googleusercontent.com')) {
+    return url.replace(/=w\d+-h\d+/, '=w576-h576');
+  }
+  return url;
+}
 
 export const ExpandedPlayer = ({ closing, onMinimize }) => {
   const {
@@ -19,6 +30,9 @@ export const ExpandedPlayer = ({ closing, onMinimize }) => {
     toggleRepeat,
     toggleShuffle,
   } = usePlayer();
+  const [imgSrc, setImgSrc] = useState(() => currentSong?.thumbnail ? getBestThumbnail(currentSong.thumbnail) : '');
+  const [prevImgSrc, setPrevImgSrc] = useState(null);
+  const [downloading, setDownloading] = useState(false);
 
   const progressRef = useRef(null);
 
@@ -26,6 +40,39 @@ export const ExpandedPlayer = ({ closing, onMinimize }) => {
     document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = '' };
   }, []);
+
+  useEffect(() => {
+    if (currentSong?.thumbnail) {
+      const newSrc = getBestThumbnail(currentSong.thumbnail);
+      if (newSrc !== imgSrc) {
+        setPrevImgSrc(imgSrc);
+        setImgSrc(newSrc);
+        setTimeout(() => setPrevImgSrc(null), 350);
+      }
+    }
+  }, [currentSong?.thumbnail]);
+
+  const handleDownload = async () => {
+    if (!currentSong?.videoId || downloading) return;
+    setDownloading(true);
+    try {
+      const res = await fetch(`/api/download/${currentSong.videoId}`);
+      if (!res.ok) throw new Error('Server error');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${currentSong.title}.mp3`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+    } catch (err) {
+      console.error('Download failed:', err);
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   const handleSeek = (e) => {
     if (!progressRef.current) return;
@@ -58,11 +105,19 @@ export const ExpandedPlayer = ({ closing, onMinimize }) => {
       <div className="flex-1 flex items-center justify-center px-6 pb-8">
         <div className="flex items-start gap-12 w-full max-w-4xl">
           {/* Album art */}
-          <div className="flex-shrink-0">
+          <div className="relative flex-shrink-0 w-72 h-72">
+            {prevImgSrc && (
+              <img
+                src={prevImgSrc}
+                alt=""
+                className="absolute inset-0 w-full h-full rounded-2xl object-cover shadow-2xl animate-fadeOut"
+              />
+            )}
             <img
-              src={currentSong.thumbnail}
+              src={imgSrc}
               alt={currentSong.title}
-              className="w-72 h-72 rounded-2xl object-cover shadow-2xl"
+              className={`w-full h-full rounded-2xl object-cover shadow-2xl ${prevImgSrc ? 'animate-fadeIn' : ''}`}
+              onError={() => currentSong?.thumbnail && setImgSrc(currentSong.thumbnail)}
             />
           </div>
 
@@ -117,6 +172,14 @@ export const ExpandedPlayer = ({ closing, onMinimize }) => {
                   <button onClick={toggleRepeat} className={`p-2.5 rounded-full transition-colors ${repeat !== 'off' ? 'text-green-400' : 'text-gray-400 hover:text-white'}`} title="Repeat">
                     {repeat === 'one' ? <Repeat1 size={22} /> : <Repeat size={22} />}
                   </button>
+                  <button
+                    onClick={handleDownload}
+                    disabled={downloading}
+                    className="p-2.5 text-gray-400 hover:text-white rounded-full transition-colors disabled:opacity-50"
+                    title={downloading ? 'Downloading...' : 'Download MP3'}
+                  >
+                    <Download size={20} />
+                  </button>
                 </div>
 
                 {/* Volume */}
@@ -137,6 +200,16 @@ export const ExpandedPlayer = ({ closing, onMinimize }) => {
           </div>
         </div>
       </div>
+
+      {downloading && (
+        <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-gray-800 rounded-2xl p-8 flex flex-col items-center gap-4 shadow-2xl animate-scaleIn">
+            <div className="w-10 h-10 border-4 border-red-600 border-t-transparent rounded-full animate-spin" />
+            <p className="text-white text-lg font-medium">Please wait...</p>
+            <p className="text-gray-400 text-sm truncate max-w-64">{currentSong?.title}</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

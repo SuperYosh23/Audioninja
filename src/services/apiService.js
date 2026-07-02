@@ -51,16 +51,6 @@ function toAlbum(item) {
   }
 }
 
-function toArtist(item) {
-  return {
-    type: 'artist',
-    browseId: item.browseId || '',
-    name: item.title || item.name || item.artist || '',
-    subscribers: item.subscribers || item.subscriberCount || '',
-    thumbnail: thumb(item.thumbnails),
-  }
-}
-
 function toPlaylist(item) {
   const artistName = item.artists?.map?.(a => a.name).join(', ') || ''
   return {
@@ -81,16 +71,14 @@ export const apiService = {
   },
 
   async searchAll(query) {
-    const [songData, albumData, artistData, playlistData] = await Promise.all([
+    const [songData, albumData, playlistData] = await Promise.all([
       fetchJson(`${API_BASE}/search/songs?q=${encodeURIComponent(query)}&limit=20`),
       fetchJson(`${API_BASE}/search/albums?q=${encodeURIComponent(query)}&limit=10`),
-      fetchJson(`${API_BASE}/search/artists?q=${encodeURIComponent(query)}&limit=10`),
       fetchJson(`${API_BASE}/search/playlists?q=${encodeURIComponent(query)}&limit=10`),
     ])
     return {
       songs: (songData.results || []).map(toSong),
       albums: (albumData.results || []).map(toAlbum),
-      artists: (artistData.results || []).map(toArtist),
       playlists: (playlistData.results || []).map(toPlaylist),
     }
   },
@@ -118,19 +106,6 @@ export const apiService = {
         duration: t.duration_seconds || 0,
         album: data.title || '',
       })),
-    }
-  },
-
-  async getArtist(browseId) {
-    const data = await fetchJson(`${API_BASE}/artist/${browseId}`)
-    const songs = (data.songs?.results || []).filter(s => s.resultType === 'song' || s.videoId).map(toSong)
-    const albums = (data.albums?.results || []).map(toAlbum)
-    return {
-      name: data.name || '',
-      thumbnail: thumb(data.thumbnails),
-      subscribers: data.subscribers || '',
-      songs,
-      albums,
     }
   },
 

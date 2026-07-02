@@ -1,6 +1,5 @@
 const STORAGE_KEYS = {
   PLAYLISTS: 'ym_playlists',
-  FOLLOWED_ARTISTS: 'ym_followed_artists',
   LISTENING_HISTORY: 'ym_listening_history',
   PREFERENCES: 'ym_preferences',
 };
@@ -13,15 +12,6 @@ export const storage = {
 
   savePlaylists: (playlists) => {
     localStorage.setItem(STORAGE_KEYS.PLAYLISTS, JSON.stringify(playlists));
-  },
-
-  getFollowedArtists: () => {
-    const data = localStorage.getItem(STORAGE_KEYS.FOLLOWED_ARTISTS);
-    return data ? JSON.parse(data) : [];
-  },
-
-  saveFollowedArtists: (artists) => {
-    localStorage.setItem(STORAGE_KEYS.FOLLOWED_ARTISTS, JSON.stringify(artists));
   },
 
   getListeningHistory: () => {
@@ -106,34 +96,6 @@ export const playlistUtils = {
   },
 };
 
-function artistKey(a) {
-  return a.artistId || a.name;
-}
-
-export const artistUtils = {
-  followArtist: (artist) => {
-    const artists = storage.getFollowedArtists();
-    const key = artistKey(artist);
-    if (!artists.find(a => artistKey(a) === key)) {
-      artists.push({ ...artist, followedAt: new Date().toISOString() });
-      storage.saveFollowedArtists(artists);
-    }
-    return artists;
-  },
-
-  unfollowArtist: (artistId, artistName) => {
-    const artists = storage.getFollowedArtists();
-    const filtered = artists.filter(a => (a.artistId || a.name) !== (artistId || artistName));
-    storage.saveFollowedArtists(filtered);
-    return filtered;
-  },
-
-  isFollowing: (artistId, artistName) => {
-    const artists = storage.getFollowedArtists();
-    return artists.some(a => (a.artistId || a.name) === (artistId || artistName));
-  },
-};
-
 export const historyUtils = {
   addToHistory: (song) => {
     const history = storage.getListeningHistory();
@@ -154,21 +116,4 @@ export const historyUtils = {
     storage.saveListeningHistory([]);
   },
 
-  getTopArtists: (limit = 10) => {
-    const history = storage.getListeningHistory();
-    const artistMap = {};
-    history.forEach(song => {
-      if (song.artists) {
-        song.artists.forEach(artist => {
-          if (!artistMap[artist.name]) {
-            artistMap[artist.name] = { name: artist.name, count: 0, thumbnail: song.thumbnail };
-          }
-          artistMap[artist.name].count += 1;
-        });
-      }
-    });
-    return Object.values(artistMap)
-      .sort((a, b) => b.count - a.count)
-      .slice(0, limit);
-  },
 };

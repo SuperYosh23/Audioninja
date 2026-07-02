@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Plus, Music, Sparkles, Search, Users, Settings, Play, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Music, Sparkles, Search, Settings, Play, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from '../context/NavigationContext';
 import { storage, playlistUtils } from '../utils/storage';
 
 const navItems = [
   { id: 'home', label: 'Home', icon: Sparkles },
   { id: 'search', label: 'Search', icon: Search },
-  { id: 'artists', label: 'Artists', icon: Users },
   { id: 'settings', label: 'Settings', icon: Settings },
 ]
 

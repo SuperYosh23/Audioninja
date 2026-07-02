@@ -3,7 +3,6 @@ import { ArrowLeft, Music, Play, Shuffle, Plus } from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
 import { useNavigate } from '../context/NavigationContext';
 import { youtubeScraperService } from '../services/youtubeScraper';
-import { storage, artistUtils } from '../utils/storage';
 import { PlaylistPickerModal } from './PlaylistPickerModal';
 
 export const ArtistPage = () => {
@@ -13,7 +12,6 @@ export const ArtistPage = () => {
   const [albums, setAlbums] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [isFollowed, setIsFollowed] = useState(false);
   const [pickerSong, setPickerSong] = useState(null);
 
   const artist = subPage?.params;
@@ -25,10 +23,9 @@ export const ArtistPage = () => {
     }
     let cancelled = false;
     setLoading(true);
-    setIsFollowed(artistUtils.isFollowing(artist.artistId, artist.name));
     setError('');
     Promise.all([
-      youtubeScraperService.getArtistVideos(artist.name, 20),
+      youtubeScraperService.search(artist.name, 20),
       youtubeScraperService.searchAlbums(artist.name),
     ]).then(([songResults, albumResults]) => {
       if (!cancelled) {
@@ -55,16 +52,6 @@ export const ArtistPage = () => {
     if (songs.length > 0) {
       const shuffled = [...songs].sort(() => Math.random() - 0.5);
       setQueueSongs(shuffled, 0);
-    }
-  };
-
-  const handleToggleFollow = () => {
-    if (isFollowed) {
-      artistUtils.unfollowArtist(artist.artistId, artist.name);
-      setIsFollowed(false);
-    } else {
-      artistUtils.followArtist({ name: artist.name, artistId: artist.artistId, thumbnail: artist.thumbnail });
-      setIsFollowed(true);
     }
   };
 
@@ -116,14 +103,7 @@ export const ArtistPage = () => {
               <Shuffle size={18} />
               Shuffle
             </button>
-            <button
-              onClick={handleToggleFollow}
-              className={`px-6 py-2 rounded-full transition-colors ${
-                isFollowed ? 'bg-gray-700 text-gray-300' : 'bg-green-600 text-white hover:bg-green-700'
-              }`}
-            >
-              {isFollowed ? 'Following' : 'Follow'}
-            </button>
+
           </div>
         </div>
       </div>

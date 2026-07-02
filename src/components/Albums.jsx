@@ -32,12 +32,6 @@ export const Albums = () => {
     navigate({ type: 'album', params: album });
   };
 
-  const handleOpenArtist = (album) => {
-    if (album.channelTitle) {
-      navigate({ type: 'artist', params: { name: album.channelTitle, artistId: album.channelId } });
-    }
-  };
-
   return (
     <div className="p-6">
       <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
@@ -98,10 +92,7 @@ export const Albums = () => {
                 className="w-full aspect-square rounded-lg object-cover mb-3"
               />
               <p className="text-white font-medium truncate">{album.title}</p>
-              <p
-                onClick={(e) => { e.stopPropagation(); handleOpenArtist(album); }}
-                className="text-gray-400 text-sm truncate hover:text-white cursor-pointer"
-              >
+              <p className="text-gray-400 text-sm truncate">
                 {album.channelTitle}
               </p>
               <p className="text-gray-500 text-xs mt-1">{album.videoCount} tracks</p>

@@ -53,10 +53,6 @@ class YouTubeScraperService {
   async getVideoDetails(videoId) {
     return await apiService.getSong(videoId)
   }
-
-  async getArtistVideos(artistName, maxResults = 20) {
-    return this.search(artistName, maxResults)
-  }
 }
 
 export const youtubeScraperService = new YouTubeScraperService()

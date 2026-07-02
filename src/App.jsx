@@ -4,7 +4,6 @@ import { useNavigate } from './context/NavigationContext';
 import { usePlayer } from './context/PlayerContext';
 import { Sidebar } from './components/Sidebar';
 import { Search as SearchComponent } from './components/Search';
-import { Artists } from './components/Artists';
 import { Recommendations } from './components/Recommendations';
 import { Settings as SettingsComponent } from './components/Settings';
 import { Player } from './components/Player';
@@ -59,7 +58,6 @@ function App() {
     switch (activeTab) {
       case 'home': return <Recommendations />;
       case 'search': return <SearchComponent searchQuery={searchQuery} setSearchQuery={setSearchQuery} />;
-      case 'artists': return <Artists />;
       case 'settings': return <SettingsComponent />;
       default: return <Recommendations />;
     }
@@ -77,7 +75,7 @@ function App() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder='Search for songs, albums, artists...'
+              placeholder='Search for songs, albums...'
               className="w-full pl-10 pr-4 py-2 bg-gray-800 text-white text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-red-500"
             />
           </form>

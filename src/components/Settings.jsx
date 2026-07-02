@@ -28,7 +28,6 @@ export const Settings = () => {
   const handleExport = () => {
     const data = {
       ym_playlists: localStorage.getItem('ym_playlists'),
-      ym_followed_artists: localStorage.getItem('ym_followed_artists'),
       ym_listening_history: localStorage.getItem('ym_listening_history'),
       ym_preferences: localStorage.getItem('ym_preferences'),
       ym_eq_settings: localStorage.getItem('ym_eq_settings'),
@@ -50,7 +49,7 @@ export const Settings = () => {
     reader.onload = (ev) => {
       try {
         const data = JSON.parse(ev.target.result);
-        const keys = ['ym_playlists', 'ym_followed_artists', 'ym_listening_history', 'ym_preferences', 'ym_eq_settings'];
+        const keys = ['ym_playlists', 'ym_listening_history', 'ym_preferences', 'ym_eq_settings'];
         let count = 0;
         keys.forEach(key => {
           if (data[key] !== undefined) {
@@ -115,7 +114,7 @@ export const Settings = () => {
         <div className="bg-gray-800/50 rounded-lg p-6">
           <h3 className="text-lg font-semibold text-white mb-4">Data Management</h3>
           <p className="text-gray-400 text-sm mb-4">
-            All your data (playlists, followed artists, listening history) is stored locally in your browser.
+            All your data (playlists, listening history) is stored locally in your browser.
           </p>
           <div className="flex flex-wrap gap-3">
             <button
