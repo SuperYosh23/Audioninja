@@ -1,9 +1,31 @@
 const API_BASE = globalThis.electronAPI?.backendUrl || '/api'
 
+const lyricsCache = new Map()
+const pendingLyrics = new Map()
+
 async function fetchJson(url) {
   const res = await fetch(url)
   if (!res.ok) throw new Error(`API ${res.status}`)
   return res.json()
+}
+
+async function doCheckLyrics(videoId) {
+  if (pendingLyrics.has(videoId)) return pendingLyrics.get(videoId)
+  const promise = (async () => {
+    try {
+      const data = await fetchJson(`${API_BASE}/lyrics/check/${videoId}`)
+      const available = data.available ?? false
+      lyricsCache.set(videoId, available)
+      pendingLyrics.delete(videoId)
+      return available
+    } catch {
+      lyricsCache.set(videoId, false)
+      pendingLyrics.delete(videoId)
+      return false
+    }
+  })()
+  pendingLyrics.set(videoId, promise)
+  return promise
 }
 
 function thumb(thumbnails) {
@@ -140,6 +162,23 @@ export const apiService = {
       thumbnail: vd.thumbnail?.thumbnails?.[vd.thumbnail.thumbnails.length - 1]?.url || '',
       duration: parseInt(vd.lengthSeconds) || 0,
       description: vd.shortDescription || '',
+    }
+  },
+
+  async checkLyrics(videoId) {
+    if (lyricsCache.has(videoId)) return lyricsCache.get(videoId)
+    return doCheckLyrics(videoId)
+  },
+
+  async getLyrics(videoId) {
+    const data = await fetchJson(`${API_BASE}/lyrics/${videoId}`)
+    return data
+  },
+
+  prefetchLyrics(videoIds) {
+    for (const id of videoIds) {
+      if (!id || lyricsCache.has(id)) continue
+      doCheckLyrics(id)
     }
   },
 }

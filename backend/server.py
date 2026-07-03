@@ -106,6 +106,33 @@ def get_song(video_id):
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/api/lyrics/check/<video_id>', methods=['GET'])
+def check_lyrics(video_id):
+    try:
+        watch = yt.get_watch_playlist(video_id)
+        lyrics_browse_id = watch.get('lyrics')
+        return jsonify({'available': bool(lyrics_browse_id)})
+    except Exception as e:
+        logger.error(f'Failed to check lyrics for {video_id}: {e}')
+        return jsonify({'available': False})
+
+
+@app.route('/api/lyrics/<video_id>', methods=['GET'])
+def get_lyrics(video_id):
+    try:
+        watch = yt.get_watch_playlist(video_id)
+        lyrics_browse_id = watch.get('lyrics')
+        if not lyrics_browse_id:
+            return jsonify({'error': 'no lyrics available'}), 404
+        lyrics = yt.get_lyrics(lyrics_browse_id, timestamps=True)
+        if not lyrics:
+            return jsonify({'error': 'no lyrics available'}), 404
+        return jsonify(lyrics)
+    except Exception as e:
+        logger.error(f'Failed to get lyrics for {video_id}: {e}')
+        return jsonify({'error': str(e)}), 500
+
+
 @app.route('/api/download/<video_id>', methods=['GET'])
 def download_song(video_id):
     try:

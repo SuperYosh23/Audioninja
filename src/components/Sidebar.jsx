@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Music, Home, Search, Settings, Play, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Music, Home, Search, Settings, Play, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { useNavigate } from '../context/NavigationContext';
 import { storage, playlistUtils } from '../utils/storage';
 
@@ -46,7 +46,7 @@ export const Sidebar = ({ activeTab, onTabChange, onNavigate }) => {
           className="shrink-0 p-1.5 text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-lg transition-colors"
           title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
-          {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={16} />}
+          {collapsed ? <PanelLeftOpen size={20} /> : <PanelLeftClose size={20} />}
         </button>
         {!collapsed && (
           <div className="flex items-center gap-2">

@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useRef, useEffect, useCallback } from 'react';
 import { historyUtils } from '../utils/storage';
+import { apiService } from '../services/apiService';
 
 const PlayerContext = createContext();
 
@@ -35,6 +36,9 @@ export const PlayerProvider = ({ children }) => {
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [minimizeOffset, setMinimizeOffset] = useState(0);
+  const [showQueue, setShowQueue] = useState(false);
+  const [showLyrics, setShowLyrics] = useState(false);
+  const [hasLyrics, setHasLyrics] = useState(null);
 
   const playerRef = useRef(null);
   const intervalRef = useRef(null);
@@ -158,6 +162,15 @@ export const PlayerProvider = ({ children }) => {
       historyUtils.addToHistory(currentSong);
     }
   }, [currentSong]);
+
+  useEffect(() => {
+    const ids = [];
+    for (let i = currentIndex; i < Math.min(currentIndex + 4, queue.length); i++) {
+      const song = queue[i];
+      if (song?.videoId) ids.push(song.videoId);
+    }
+    if (ids.length > 0) apiService.prefetchLyrics(ids);
+  }, [queue, currentIndex]);
 
   const playSong = (song, newQueue = null) => {
     if (newQueue) {
@@ -328,6 +341,27 @@ export const PlayerProvider = ({ children }) => {
     }
   };
 
+  const reorderQueue = (fromIndex, toIndex) => {
+    if (shuffle) return;
+    const newQueue = [...queue];
+    const [moved] = newQueue.splice(fromIndex, 1);
+    newQueue.splice(toIndex, 0, moved);
+    setQueue(newQueue);
+
+    const newOriginal = [...originalQueueRef.current];
+    const [movedOrig] = newOriginal.splice(fromIndex, 1);
+    newOriginal.splice(toIndex, 0, movedOrig);
+    originalQueueRef.current = newOriginal;
+
+    if (fromIndex === currentIndex) {
+      setCurrentIndex(toIndex);
+    } else if (fromIndex < currentIndex && toIndex >= currentIndex) {
+      setCurrentIndex(currentIndex - 1);
+    } else if (fromIndex > currentIndex && toIndex <= currentIndex) {
+      setCurrentIndex(currentIndex + 1);
+    }
+  };
+
   const clearQueue = () => {
     originalQueueRef.current = [];
     shuffledIndicesRef.current = [];
@@ -405,7 +439,14 @@ export const PlayerProvider = ({ children }) => {
     setQueueSongs,
     addToQueue,
     removeFromQueue,
+    reorderQueue,
     clearQueue,
+    showQueue,
+    setShowQueue,
+    showLyrics,
+    setShowLyrics,
+    hasLyrics,
+    setHasLyrics,
     seekTo,
     changeVolume,
     setProgress,

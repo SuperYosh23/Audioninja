@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 
 function resolveColor(variable, fallback) {
   if (typeof document === 'undefined') return fallback;
@@ -9,6 +9,8 @@ export const WavyProgressBar = ({ progress = 0, height, onSeek }) => {
   const canvasRef = useRef(null);
   const wrapRef = useRef(null);
   const progressRef = useRef(progress);
+  const draggingRef = useRef(false);
+  const [dragging, setDragging] = useState(false);
   progressRef.current = progress;
 
   useEffect(() => {
@@ -79,17 +81,48 @@ export const WavyProgressBar = ({ progress = 0, height, onSeek }) => {
     return () => cancelAnimationFrame(rafId);
   }, [height]);
 
-  const handleClick = (e) => {
-    if (!onSeek) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    onSeek(((e.clientX - rect.left) / rect.width));
+  const seekFromEvent = (e) => {
+    if (!onSeek || !wrapRef.current) return;
+    const rect = wrapRef.current.getBoundingClientRect();
+    const fraction = (e.clientX - rect.left) / rect.width;
+    onSeek(Math.max(0, Math.min(1, fraction)));
+  };
+
+  const handlePointerDown = (e) => {
+    draggingRef.current = true;
+    setDragging(true);
+    e.currentTarget.setPointerCapture(e.pointerId);
+    seekFromEvent(e);
+  };
+
+  const handlePointerMove = (e) => {
+    if (!draggingRef.current) return;
+    seekFromEvent(e);
+  };
+
+  const handlePointerUp = (e) => {
+    if (!draggingRef.current) return;
+    draggingRef.current = false;
+    setDragging(false);
+    e.currentTarget.releasePointerCapture(e.pointerId);
+    seekFromEvent(e);
   };
 
   return (
     <div
       ref={wrapRef}
-      onClick={handleClick}
-      style={{ width: '100%', height, cursor: 'pointer', position: 'relative' }}
+      onClick={seekFromEvent}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      style={{
+        width: '100%',
+        height,
+        cursor: 'pointer',
+        position: 'relative',
+        touchAction: 'none',
+      }}
+      className={dragging ? 'opacity-80' : ''}
     >
       <canvas ref={canvasRef} style={{ display: 'block', width: '100%', height }} />
     </div>

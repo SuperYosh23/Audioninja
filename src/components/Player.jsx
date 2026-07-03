@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
 import { usePlayer } from '../context/PlayerContext';
-import { Play, Pause, SkipForward, SkipBack, ChevronUp, Shuffle, Repeat, Repeat1, Download, Volume2, VolumeX } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, ChevronUp, Shuffle, Repeat, Repeat1, Download, Volume2, VolumeX, ListMusic, MicVocal } from 'lucide-react';
 import { LoadingIndicator } from './LoadingIndicator';
 import { WavyProgressBar } from './WavyProgressBar';
+import { QueuePanel } from './QueuePanel';
 
 export const Player = ({ playerExpanded }) => {
   const {
@@ -25,6 +26,11 @@ export const Player = ({ playerExpanded }) => {
     setDragOffset,
     setIsDragging,
     minimizeOffset,
+    showQueue,
+    setShowQueue,
+    showLyrics,
+    setShowLyrics,
+    hasLyrics,
   } = usePlayer();
 
   const [downloading, setDownloading] = useState(false);
@@ -53,7 +59,7 @@ export const Player = ({ playerExpanded }) => {
   };
 
   const handleSeek = (fraction) => {
-    seekTo(fraction * duration);
+    seekTo(Math.min(fraction * duration, Math.max(0, duration - 0.5)));
   };
 
   const formatTime = (s) => {
@@ -169,7 +175,23 @@ export const Player = ({ playerExpanded }) => {
               >
                 <Download size={15} />
               </button>
-              <div className="relative group">
+              <button
+                onClick={() => setShowQueue(true)}
+                className={`p-1.5 rounded-full transition-colors ${showQueue ? 'text-primary' : 'text-on-surface-variant hover:text-on-surface'}`}
+                title="Queue"
+              >
+                <ListMusic size={15} />
+              </button>
+              {hasLyrics && (
+                <button
+                  onClick={() => { setShowLyrics(true); setPlayerExpanded(true); }}
+                  className={`p-1.5 rounded-full transition-colors ${showLyrics ? 'text-primary' : 'text-on-surface-variant hover:text-on-surface'}`}
+                  title="Show lyrics"
+                >
+                  <MicVocal size={15} />
+                </button>
+              )}
+              <div className="relative group ml-2">
                 <button onClick={() => changeVolume(volume === 0 ? 1 : 0)} className="p-1.5 text-on-surface-variant hover:text-on-surface rounded-full transition-colors" title="Volume">
                   {volume === 0 ? <VolumeX size={15} /> : <Volume2 size={15} />}
                 </button>
@@ -215,6 +237,8 @@ export const Player = ({ playerExpanded }) => {
           </div>
         </div>
       )}
+
+      {showQueue && <QueuePanel onClose={() => setShowQueue(false)} />}
     </>
   );
 };
