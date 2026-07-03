@@ -18,6 +18,7 @@
   "build": {
     "appId": "com.audioninja.app",
     "productName": "audioNINJA",
+    "icon": "build/icon.png",
     "files": [
       "dist/**/*",
       "electron/**/*",

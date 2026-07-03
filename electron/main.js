@@ -105,12 +105,15 @@ function stopPythonBackend() {
 
 function createWindow() {
   Menu.setApplicationMenu(null);
+  const iconPath = path.join(__dirname, '..', isDev ? 'public' : 'dist', 'icon.png');
+
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
     minWidth: 800,
     minHeight: 600,
     title: 'audioNINJA',
+    icon: iconPath,
     backgroundColor: '#16171d',
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
