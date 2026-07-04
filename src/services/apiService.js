@@ -175,6 +175,10 @@ export const apiService = {
     return data
   },
 
+  async getAudioUrl(videoId) {
+    return fetchJson(`${API_BASE}/audio/${videoId}`)
+  },
+
   prefetchLyrics(videoIds) {
     for (const id of videoIds) {
       if (!id || lyricsCache.has(id)) continue

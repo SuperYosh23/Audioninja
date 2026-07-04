@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Settings as SettingsIcon, Moon, Sun, Download, Upload, Trash2, Check, Image as ImageIcon, Palette, RotateCcw, ChevronDown } from 'lucide-react';
 import { storage } from '../utils/storage';
 import { extractColorsFromImage, generatePaletteFromSource, applyTheme, loadTheme, applyCurrentTheme, resetTheme } from '../utils/colorScheme';
+import { EQPanel } from './EQPanel';
 
 export const Settings = () => {
   const [preferences, setPreferences] = useState({ theme: 'dark', autoplay: true });
@@ -35,14 +36,14 @@ export const Settings = () => {
     storage.savePreferences(newPreferences);
   };
 
+  const DATA_KEYS = ['ym_playlists', 'ym_listening_history', 'ym_preferences', 'ym_eq_settings', 'ym_eq_presets', 'ym_custom_theme'];
+
   const handleExport = () => {
-    const data = {
-      ym_playlists: localStorage.getItem('ym_playlists'),
-      ym_listening_history: localStorage.getItem('ym_listening_history'),
-      ym_preferences: localStorage.getItem('ym_preferences'),
-      ym_eq_settings: localStorage.getItem('ym_eq_settings'),
-      exportedAt: new Date().toISOString(),
-    };
+    const data = { exportedAt: new Date().toISOString() };
+    DATA_KEYS.forEach(key => {
+      const val = localStorage.getItem(key);
+      if (val !== null) data[key] = val;
+    });
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -59,7 +60,7 @@ export const Settings = () => {
     reader.onload = (ev) => {
       try {
         const data = JSON.parse(ev.target.result);
-        const keys = ['ym_playlists', 'ym_listening_history', 'ym_preferences', 'ym_eq_settings'];
+        const keys = DATA_KEYS;
         let count = 0;
         keys.forEach(key => {
           if (data[key] !== undefined) {
@@ -168,9 +169,13 @@ export const Settings = () => {
         </div>
 
         <div className="bg-surface-container/50 rounded-xl p-6">
+          <EQPanel />
+        </div>
+
+        <div className="bg-surface-container/50 rounded-xl p-6">
           <h3 className="text-lg font-semibold text-on-surface mb-4">Data Management</h3>
           <p className="text-on-surface-variant text-sm mb-4">
-            All your data (playlists, listening history) is stored locally in your browser.
+            All your data (playlists, listening history) is stored locally on your PC. In case you get a new PC or want to reinstall audioNINJA, the buttons below can help you import and export your data.
           </p>
           <div className="flex flex-wrap gap-3">
             <button

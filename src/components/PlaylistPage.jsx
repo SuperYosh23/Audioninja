@@ -97,12 +97,6 @@ export const PlaylistPage = () => {
 
   return (
     <div className="p-6 animate-fadeIn">
-      <button
-        onClick={navigateBack}
-        className="flex items-center gap-2 text-on-surface-variant hover:text-on-surface mb-6 transition-colors"
-      >
-        <ArrowLeft size={20} /> Back
-      </button>
 
       <div className="flex items-center gap-6 mb-8 animate-slideDown">
         <div className="relative group flex-shrink-0">
@@ -124,7 +118,7 @@ export const PlaylistPage = () => {
             {playlist.customThumbnail && (
               <button
                 onClick={handleRemoveThumbnail}
-                className="p-2 bg-primary-container rounded-full hover:bg-primary/80 transition-colors"
+                className="p-2 bg-red-700 text-white rounded-full hover:bg-red-800 transition-colors"
                 title="Remove custom image"
               >
                 <Trash2 size={20} />
@@ -235,7 +229,7 @@ export const PlaylistPage = () => {
                 </button>
                 <button
                   onClick={(e) => { e.stopPropagation(); handleRemoveSong(song.videoId); }}
-                  className="p-2 bg-primary text-on-surface rounded-full hover:bg-primary/80"
+                  className="p-2 bg-red-700 text-white rounded-full hover:bg-red-800"
                 >
                   <Trash2 size={14} />
                 </button>

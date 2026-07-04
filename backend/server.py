@@ -133,6 +133,35 @@ def get_lyrics(video_id):
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/api/audio/<video_id>', methods=['GET'])
+def get_audio_url(video_id):
+    try:
+        url = f'https://youtube.com/watch?v={video_id}'
+        ydl_opts = {
+            'format': 'bestaudio[ext=m4a]/bestaudio/best',
+            'quiet': True,
+            'no_warnings': True,
+        }
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=False)
+            audio_url = info.get('url')
+            if not audio_url:
+                for fmt in info.get('formats', []):
+                    if fmt.get('acodec') != 'none' and fmt.get('vcodec') == 'none':
+                        audio_url = fmt.get('url')
+                        break
+            if not audio_url:
+                return jsonify({'error': 'No audio stream found'}), 404
+            return jsonify({
+                'url': audio_url,
+                'title': info.get('title', ''),
+                'duration': info.get('duration', 0),
+            })
+    except Exception as e:
+        logger.error(f'Failed to get audio URL for {video_id}: {e}')
+        return jsonify({'error': str(e)}), 500
+
+
 @app.route('/api/download/<video_id>', methods=['GET'])
 def download_song(video_id):
     try:

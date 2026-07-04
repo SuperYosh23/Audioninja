@@ -7,7 +7,7 @@ import { PlaylistPickerModal } from './PlaylistPickerModal';
 import { LoadingIndicator } from './LoadingIndicator';
 
 export const ArtistPage = () => {
-  const { subPage, navigateBack } = useNavigate();
+  const { subPage, navigate, navigateBack } = useNavigate();
   const { playSong, setQueueSongs } = usePlayer();
   const [songs, setSongs] = useState([]);
   const [albums, setAlbums] = useState([]);
@@ -56,10 +56,8 @@ export const ArtistPage = () => {
     }
   };
 
-  const handlePlayAlbum = (album) => {
-    youtubeScraperService.getPlaylistTracks(album.playlistId).then(tracks => {
-      if (tracks.length > 0) setQueueSongs(tracks, 0);
-    });
+  const handleOpenAlbum = (album) => {
+    navigate({ type: 'album', params: { ...album, channelTitle: artist.name } });
   };
 
   if (!artist) return null;
@@ -116,7 +114,7 @@ export const ArtistPage = () => {
             {albums.map((album, i) => (
               <div
                 key={album.playlistId}
-                onClick={() => handlePlayAlbum(album)}
+                onClick={() => handleOpenAlbum(album)}
                 className="flex-shrink-0 w-40 cursor-pointer hover:scale-105 transition-transform animate-scaleIn"
                 style={{ animationDelay: `${i * 0.08}s`, animationFillMode: 'backwards' }}
               >

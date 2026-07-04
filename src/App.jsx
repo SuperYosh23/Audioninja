@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Search as SearchIcon, Play } from 'lucide-react';
+import { Search as SearchIcon, PanelLeftClose, PanelLeftOpen, Minus, Square, X } from 'lucide-react';
 import { useNavigate } from './context/NavigationContext';
 import { usePlayer } from './context/PlayerContext';
 import { Sidebar } from './components/Sidebar';
@@ -16,9 +16,21 @@ function App() {
   const [activeTab, setActiveTab] = useState('home');
   const [searchQuery, setSearchQuery] = useState('');
   const [keepExpanded, setKeepExpanded] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+  const [winMaximized, setWinMaximized] = useState(false);
   const searchRef = useRef(null);
   const { subPage, navigate } = useNavigate();
   const { playerExpanded, setPlayerExpanded, dragOffset } = usePlayer();
+
+  useEffect(() => {
+    if (!window.electronAPI?.isElectron) return;
+    window.electronAPI.isMaximized().then(setWinMaximized);
+    window.electronAPI.onMaximizeChange(setWinMaximized);
+  }, []);
+
+  const handleWinMinimize = () => window.electronAPI?.minimize();
+  const handleWinMaximize = () => window.electronAPI?.maximize();
+  const handleWinClose = () => window.electronAPI?.close();
 
   const handleMinimize = () => {
     document.body.style.overflow = '';
@@ -65,10 +77,20 @@ function App() {
 
   return (
     <div className={`h-screen bg-surface-dim text-on-surface flex flex-col ${playerExpanded ? 'overflow-hidden' : ''}`}>
-      {/* Top search bar */}
-      <div className="relative z-40 bg-surface-container border-b border-outline-variant">
-        <div className="px-4 py-2.5 flex justify-center">
-          <form onSubmit={handleSearch} className="relative w-full max-w-xl">
+      {/* Top bar */}
+      <div className="relative z-40 bg-surface-container border-b border-outline-variant flex items-center shrink-0 select-none h-12" style={{ WebkitAppRegion: 'drag' }}>
+        <div className="flex items-center gap-2 px-3 shrink-0" style={{ WebkitAppRegion: 'no-drag' }}>
+          <button
+            onClick={() => setCollapsed(!collapsed)}
+            className="p-1.5 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-lg transition-colors"
+            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            {collapsed ? <PanelLeftOpen size={20} /> : <PanelLeftClose size={20} />}
+          </button>
+          <span className="text-sm font-bold" style={{ fontFamily: "system-ui, 'Segoe UI', Roboto, sans-serif" }}>audio<span className="text-primary">NINJA</span></span>
+        </div>
+        <div className="flex-1 flex justify-center px-4">
+          <form onSubmit={handleSearch} className="relative w-full max-w-xl" style={{ WebkitAppRegion: 'no-drag' }}>
             <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-outline" size={18} />
             <input
               ref={searchRef}
@@ -80,11 +102,24 @@ function App() {
             />
           </form>
         </div>
+        {window.electronAPI?.isElectron && (
+          <div className="flex h-full shrink-0" style={{ WebkitAppRegion: 'no-drag' }}>
+            <button onClick={handleWinMinimize} className="px-3 h-full text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors" title="Minimize">
+              <Minus size={14} />
+            </button>
+            <button onClick={handleWinMaximize} className="px-3 h-full text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors" title={winMaximized ? 'Restore' : 'Maximize'}>
+              <Square size={12} />
+            </button>
+            <button onClick={handleWinClose} className="px-3 h-full text-on-surface-variant hover:text-white hover:bg-red-600 transition-colors" title="Close">
+              <X size={14} />
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Sidebar + Main content */}
       <div className="flex flex-1 min-h-0">
-        <Sidebar activeTab={activeTab} onTabChange={handleTabChange} onNavigate={() => setPlayerExpanded(false)} />
+        <Sidebar activeTab={activeTab} onTabChange={handleTabChange} onNavigate={() => setPlayerExpanded(false)} collapsed={collapsed} />
         <main className="flex-1 relative" style={{ overflow: (playerExpanded || keepExpanded) ? 'hidden' : 'auto', paddingBottom: (playerExpanded || keepExpanded) ? 0 : '6rem' }}>
           <div>
             {renderMain()}

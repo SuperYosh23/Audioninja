@@ -115,12 +115,21 @@ function createWindow() {
     title: 'audioNINJA',
     icon: iconPath,
     backgroundColor: '#16171d',
+    frame: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
       nodeIntegration: false,
       webSecurity: false,
     },
+  });
+
+  mainWindow.on('maximize', () => {
+    mainWindow.webContents.send('window-state-changed', true);
+  });
+
+  mainWindow.on('unmaximize', () => {
+    mainWindow.webContents.send('window-state-changed', false);
   });
 
   if (isDev) {
@@ -133,6 +142,19 @@ function createWindow() {
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
+}
+
+function setupWindowControls() {
+  ipcMain.on('window-minimize', () => mainWindow?.minimize());
+  ipcMain.on('window-maximize', () => {
+    if (mainWindow?.isMaximized()) {
+      mainWindow.unmaximize();
+    } else {
+      mainWindow?.maximize();
+    }
+  });
+  ipcMain.on('window-close', () => mainWindow?.close());
+  ipcMain.handle('window-is-maximized', () => mainWindow?.isMaximized() ?? false);
 }
 
 function setupAudioCapture() {
@@ -155,6 +177,7 @@ function setupAudioCapture() {
 app.whenReady().then(async () => {
   startPythonBackend();
   setupAudioCapture();
+  setupWindowControls();
 
   try {
     await waitForBackend();

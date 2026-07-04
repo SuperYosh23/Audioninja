@@ -110,6 +110,78 @@ export const playlistUtils = {
   },
 };
 
+const EQ_STORAGE_KEY = 'ym_eq_settings';
+
+export const eqStorage = {
+  getSettings() {
+    try {
+      const data = localStorage.getItem(EQ_STORAGE_KEY);
+      if (!data) return null;
+      const parsed = JSON.parse(data);
+      if (parsed && Array.isArray(parsed.indices) && Array.isArray(parsed.gains)) {
+        return { indices: parsed.indices, gains: parsed.gains };
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  },
+
+  saveSettings(settings) {
+    localStorage.setItem(EQ_STORAGE_KEY, JSON.stringify(settings));
+  },
+
+  clear() {
+    localStorage.removeItem(EQ_STORAGE_KEY);
+  },
+};
+
+const EQ_PRESETS_KEY = 'ym_eq_presets';
+
+export const eqPresetStorage = {
+  getPresets() {
+    try {
+      const data = localStorage.getItem(EQ_PRESETS_KEY);
+      if (!data) return [];
+      const parsed = JSON.parse(data);
+      if (Array.isArray(parsed)) return parsed;
+      return [];
+    } catch {
+      return [];
+    }
+  },
+
+  savePreset(name, indices, gains) {
+    const presets = this.getPresets();
+    const existing = presets.findIndex(p => p.name === name);
+    const preset = { name, indices, gains };
+    if (existing !== -1) {
+      presets[existing] = preset;
+    } else {
+      presets.push(preset);
+    }
+    localStorage.setItem(EQ_PRESETS_KEY, JSON.stringify(presets));
+    window.dispatchEvent(new Event('eq-presets-changed'));
+    return preset;
+  },
+
+  deletePreset(name) {
+    const presets = this.getPresets().filter(p => p.name !== name);
+    localStorage.setItem(EQ_PRESETS_KEY, JSON.stringify(presets));
+    window.dispatchEvent(new Event('eq-presets-changed'));
+  },
+
+  renamePreset(oldName, newName) {
+    const presets = this.getPresets();
+    const preset = presets.find(p => p.name === oldName);
+    if (preset) {
+      preset.name = newName;
+      localStorage.setItem(EQ_PRESETS_KEY, JSON.stringify(presets));
+      window.dispatchEvent(new Event('eq-presets-changed'));
+    }
+  },
+};
+
 export const historyUtils = {
   addToHistory: (song) => {
     const history = storage.getListeningHistory();

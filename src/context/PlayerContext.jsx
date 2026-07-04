@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useRef, useEffect, useCallback } from 'react';
-import { historyUtils } from '../utils/storage';
+import { historyUtils, eqStorage, eqPresetStorage } from '../utils/storage';
 import { apiService } from '../services/apiService';
+import { EQ_BANDS_POOL, EQ_DEFAULT_BAND_INDICES, EQ_BAND_COUNT_MIN, findNextBandIndex, createEqEngine } from '../utils/eqEngine';
 
 const PlayerContext = createContext();
 
@@ -21,6 +22,9 @@ function shuffleArray(arr) {
   return a;
 }
 
+const DEFAULT_EQ_INDICES = [...EQ_DEFAULT_BAND_INDICES];
+const DEFAULT_EQ_GAINS = DEFAULT_EQ_INDICES.map(() => 0);
+
 export const PlayerProvider = ({ children }) => {
   const [currentSong, setCurrentSong] = useState(null);
   const [queue, setQueue] = useState([]);
@@ -29,7 +33,6 @@ export const PlayerProvider = ({ children }) => {
   const [volume, setVolume] = useState(1);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [playerReady, setPlayerReady] = useState(false);
   const [repeat, setRepeat] = useState('off');
   const [shuffle, setShuffle] = useState(false);
   const [playerExpanded, setPlayerExpanded] = useState(false);
@@ -39,109 +42,73 @@ export const PlayerProvider = ({ children }) => {
   const [showQueue, setShowQueue] = useState(false);
   const [showLyrics, setShowLyrics] = useState(false);
   const [hasLyrics, setHasLyrics] = useState(null);
+  const [userPresets, setUserPresets] = useState(() => eqPresetStorage.getPresets());
 
-  const playerRef = useRef(null);
+  useEffect(() => {
+    const handler = () => setUserPresets(eqPresetStorage.getPresets());
+    window.addEventListener('eq-presets-changed', handler);
+    return () => window.removeEventListener('eq-presets-changed', handler);
+  }, []);
+
+  const [eqEnabled, setEqEnabled] = useState(() => {
+    const saved = eqStorage.getSettings();
+    return saved ? true : false;
+  });
+  const [eqIndices, setEqIndices] = useState(() => {
+    const saved = eqStorage.getSettings();
+    return saved?.indices && saved.indices.length >= EQ_BAND_COUNT_MIN
+      ? saved.indices
+      : [...DEFAULT_EQ_INDICES];
+  });
+  const [eqGains, setEqGains] = useState(() => {
+    const saved = eqStorage.getSettings();
+    return saved?.gains && saved.gains.length >= EQ_BAND_COUNT_MIN
+      ? saved.gains
+      : [...DEFAULT_EQ_GAINS];
+  });
+
+  const audioRef = useRef(null);
   const intervalRef = useRef(null);
   const playNextRef = useRef(null);
   const volumeRef = useRef(volume);
   const originalQueueRef = useRef([]);
   const shuffledIndicesRef = useRef([]);
-  const [playerInitKey, setPlayerInitKey] = useState(0);
+  const loadingRef = useRef(false);
+  const eqEngineRef = useRef(null);
+  const eqAnalyserRef = useRef(null);
 
   volumeRef.current = volume;
 
   useEffect(() => {
-    if (!window.YT) {
-      const tag = document.createElement('script');
-      tag.src = 'https://www.youtube.com/iframe_api';
-      const firstScriptTag = document.getElementsByTagName('script')[0];
-      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+    const audio = audioRef.current;
+    if (!audio) return;
 
-      window.onYouTubeIframeAPIReady = () => {
-        setPlayerReady(true);
-      };
-    } else {
-      setPlayerReady(true);
-    }
+    const onEnded = () => playNextRef.current?.();
+    const onError = () => console.error('[Player] Audio error');
+    const onLoadedMetadata = () => {
+      if (audio.duration > 0 && isFinite(audio.duration)) {
+        setDuration(audio.duration);
+      }
+    };
+
+    audio.addEventListener('ended', onEnded);
+    audio.addEventListener('error', onError);
+    audio.addEventListener('loadedmetadata', onLoadedMetadata);
 
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
+      audio.removeEventListener('ended', onEnded);
+      audio.removeEventListener('error', onError);
+      audio.removeEventListener('loadedmetadata', onLoadedMetadata);
     };
   }, []);
 
   useEffect(() => {
-    if (playerReady && !playerRef.current) {
-      try {
-        playerRef.current = new window.YT.Player('hidden-player', {
-          height: '1',
-          width: '1',
-          videoId: '',
-          playerVars: {
-            autoplay: 1,
-            controls: 0,
-            disablekb: 1,
-            fs: 0,
-            modestbranding: 1,
-            playsinline: 1,
-            rel: 0,
-            enablejsapi: 1,
-          },
-          events: {
-            onReady: () => {
-              console.log('[Player] YT.Player ready');
-              if (playerRef.current) {
-                playerRef.current.setVolume(volumeRef.current * 100);
-              }
-            },
-            onStateChange: (event) => {
-              if (event.data === window.YT.PlayerState.ENDED) {
-                playNextRef.current?.();
-              }
-              if (event.data === window.YT.PlayerState.PLAYING) {
-                const dur = playerRef.current?.getDuration?.();
-                if (dur > 0) setDuration(dur);
-              }
-              if (event.data === window.YT.PlayerState.UNSTARTED) {
-                const err = playerRef.current?.getPlayerError?.();
-                if (err) console.error('[Player] Error:', err);
-              }
-            },
-            onError: (event) => {
-              console.error('[Player] onError:', event.data);
-            },
-          },
-        });
-      } catch (err) {
-        console.error('[Player] Failed to create YT.Player:', err);
-        if (playerInitKey < 3) {
-          setTimeout(() => setPlayerInitKey(k => k + 1), 2000);
-        }
-      }
-    }
-
-    return () => {
-      if (playerRef.current && typeof playerRef.current.destroy === 'function') {
-        try {
-          playerRef.current.destroy();
-        } catch (err) {
-          console.error('[Player] destroy failed:', err);
-        }
-        playerRef.current = null;
-      }
-    };
-  }, [playerReady, playerInitKey]);
-
-  useEffect(() => {
-    if (isPlaying && playerRef.current && playerReady) {
+    if (isPlaying && audioRef.current) {
       intervalRef.current = setInterval(() => {
-        if (playerRef.current?.getCurrentTime) {
-          setProgress(playerRef.current.getCurrentTime());
-        }
-        if (playerRef.current?.getDuration) {
-          const dur = playerRef.current.getDuration();
-          if (dur > 0) setDuration(dur);
+        if (audioRef.current && !audioRef.current.paused) {
+          setProgress(audioRef.current.currentTime);
+          const dur = audioRef.current.duration;
+          if (dur > 0 && isFinite(dur)) setDuration(dur);
         }
       }, 10);
     } else {
@@ -155,7 +122,7 @@ export const PlayerProvider = ({ children }) => {
         clearInterval(intervalRef.current);
       }
     };
-  }, [isPlaying, playerReady]);
+  }, [isPlaying]);
 
   useEffect(() => {
     if (currentSong) {
@@ -171,6 +138,129 @@ export const PlayerProvider = ({ children }) => {
     }
     if (ids.length > 0) apiService.prefetchLyrics(ids);
   }, [queue, currentIndex]);
+
+  useEffect(() => {
+    return () => {
+      if (eqEngineRef.current) {
+        eqEngineRef.current.destroy();
+        eqEngineRef.current = null;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (eqEngineRef.current) {
+      eqEngineRef.current.setEnabled(eqEnabled, eqIndices, eqGains);
+    }
+  }, [eqEnabled, eqIndices, eqGains]);
+
+  const setEqBand = useCallback((index, value) => {
+    setEqGains(prev => {
+      const next = [...prev];
+      next[index] = value;
+      eqStorage.saveSettings({ indices: eqIndices, gains: next });
+      if (eqEngineRef.current) {
+        eqEngineRef.current.setGain(eqIndices[index], value);
+      }
+      return next;
+    });
+  }, [eqIndices]);
+
+  const addEqBand = useCallback(() => {
+    setEqIndices(prev => {
+      if (prev.length >= EQ_BANDS_POOL.length) return prev;
+      const nextIdx = findNextBandIndex(prev);
+      if (nextIdx === -1) return prev;
+      const newIndices = [...prev, nextIdx].sort((a, b) => a - b);
+      const insertPos = newIndices.indexOf(nextIdx);
+      setEqGains(gainsPrev => {
+        const newGains = [...gainsPrev];
+        newGains.splice(insertPos, 0, 0);
+        eqStorage.saveSettings({ indices: newIndices, gains: newGains });
+        return newGains;
+      });
+      return newIndices;
+    });
+  }, []);
+
+  const removeEqBand = useCallback(() => {
+    setEqIndices(prev => {
+      if (prev.length <= EQ_BAND_COUNT_MIN) return prev;
+      const toRemove = prev[prev.length - 1];
+      const removePos = prev.indexOf(toRemove);
+      const newIndices = prev.filter(i => i !== toRemove);
+      setEqGains(gainsPrev => {
+        const newGains = [...gainsPrev];
+        newGains.splice(removePos, 1);
+        eqStorage.saveSettings({ indices: newIndices, gains: newGains });
+        return newGains;
+      });
+      if (eqEngineRef.current) {
+        eqEngineRef.current.setGain(toRemove, 0);
+      }
+      return newIndices;
+    });
+  }, []);
+
+  const toggleEq = useCallback(() => {
+    setEqEnabled(prev => !prev);
+  }, []);
+
+  const resetEq = useCallback(() => {
+    setEqEnabled(false);
+    const defaultIndices = [...DEFAULT_EQ_INDICES];
+    const defaultGains = DEFAULT_EQ_INDICES.map(() => 0);
+    setEqIndices(defaultIndices);
+    setEqGains(defaultGains);
+    eqStorage.clear();
+    if (eqEngineRef.current) {
+      eqEngineRef.current.setEnabled(false, defaultIndices, defaultGains);
+    }
+  }, []);
+
+  const applyPreset = useCallback((gains, indices) => {
+    const targetIndices = indices ?? eqIndices;
+    setEqEnabled(true);
+    setEqGains(gains);
+    setEqIndices(targetIndices);
+    eqStorage.saveSettings({ indices: targetIndices, gains });
+    if (eqEngineRef.current) {
+      eqEngineRef.current.setEnabled(true, targetIndices, gains);
+    }
+  }, [eqIndices]);
+
+  const saveCurrentPreset = useCallback((name) => {
+    eqPresetStorage.savePreset(name, eqIndices, eqGains);
+  }, [eqIndices, eqGains]);
+
+  const deleteUserPreset = useCallback((name) => {
+    eqPresetStorage.deletePreset(name);
+  }, []);
+
+  const loadAndPlay = async (videoId) => {
+    if (!audioRef.current || loadingRef.current) return;
+
+    if (!eqEngineRef.current) {
+      const engine = createEqEngine(audioRef.current, eqIndices, eqGains, eqAnalyserRef);
+      eqEngineRef.current = engine;
+      engine.connect();
+      engine.setEnabled(eqEnabled, eqIndices, eqGains);
+    }
+
+    loadingRef.current = true;
+    try {
+      const data = await apiService.getAudioUrl(videoId);
+      if (!data?.url) throw new Error('No audio URL returned');
+      audioRef.current.src = data.url;
+      audioRef.current.volume = volumeRef.current;
+      await audioRef.current.play();
+      setIsPlaying(true);
+    } catch (err) {
+      console.error('[Player] Failed to load audio:', err);
+    } finally {
+      loadingRef.current = false;
+    }
+  };
 
   const playSong = (song, newQueue = null) => {
     if (newQueue) {
@@ -190,32 +280,16 @@ export const PlayerProvider = ({ children }) => {
     setCurrentSong(song);
     setIsPlaying(true);
     setProgress(0);
-
-    if (playerRef.current && playerReady) {
-      try {
-        playerRef.current.loadVideoById(song.videoId);
-        playerRef.current.setVolume(volume * 100);
-      } catch (err) {
-        console.error('[Player] loadVideoById failed:', err);
-      }
-    } else {
-      console.warn('[Player] Not ready yet, cannot play');
-    }
+    loadAndPlay(song.videoId);
   };
 
   const togglePlay = () => {
-    if (!playerRef.current || !playerReady) return;
-
-    try {
-      if (isPlaying) {
-        playerRef.current.pauseVideo();
-        setIsPlaying(false);
-      } else {
-        playerRef.current.playVideo();
-        setIsPlaying(true);
-      }
-    } catch (err) {
-      console.error('[Player] togglePlay failed:', err);
+    if (!audioRef.current) return;
+    if (isPlaying) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    } else {
+      audioRef.current.play().then(() => setIsPlaying(true)).catch(console.error);
     }
   };
 
@@ -224,13 +298,9 @@ export const PlayerProvider = ({ children }) => {
 
     if (repeat === 'one') {
       setProgress(0);
-      if (playerRef.current && playerReady) {
-        try {
-          playerRef.current.seekTo(0, true);
-          playerRef.current.playVideo();
-        } catch (err) {
-          console.error('[Player] seekTo/playVideo failed:', err);
-        }
+      if (audioRef.current) {
+        audioRef.current.currentTime = 0;
+        audioRef.current.play().catch(console.error);
       }
       return;
     }
@@ -240,28 +310,14 @@ export const PlayerProvider = ({ children }) => {
       setCurrentIndex(nextIndex);
       setCurrentSong(queue[nextIndex]);
       setProgress(0);
-
-      if (playerRef.current && playerReady) {
-        try {
-          playerRef.current.loadVideoById(queue[nextIndex].videoId);
-        } catch (err) {
-          console.error('[Player] loadVideoById failed:', err);
-        }
-      }
+      loadAndPlay(queue[nextIndex].videoId);
     } else if (repeat === 'all') {
       setCurrentIndex(0);
       setCurrentSong(queue[0]);
       setProgress(0);
-
-      if (playerRef.current && playerReady) {
-        try {
-          playerRef.current.loadVideoById(queue[0].videoId);
-        } catch (err) {
-          console.error('[Player] loadVideoById failed:', err);
-        }
-      }
+      loadAndPlay(queue[0].videoId);
     }
-  }, [queue, currentIndex, repeat, playerReady]);
+  }, [queue, currentIndex, repeat]);
 
   playNextRef.current = playNext;
 
@@ -271,14 +327,7 @@ export const PlayerProvider = ({ children }) => {
       setCurrentIndex(prevIndex);
       setCurrentSong(queue[prevIndex]);
       setProgress(0);
-
-      if (playerRef.current && playerReady) {
-        try {
-          playerRef.current.loadVideoById(queue[prevIndex].videoId);
-        } catch (err) {
-          console.error('[Player] loadVideoById failed:', err);
-        }
-      }
+      loadAndPlay(queue[prevIndex].videoId);
     }
   };
 
@@ -300,14 +349,7 @@ export const PlayerProvider = ({ children }) => {
     }
     setIsPlaying(true);
     setProgress(0);
-
-    if (playerRef.current && playerReady) {
-      try {
-        playerRef.current.loadVideoById(videoId);
-      } catch (err) {
-        console.error('[Player] loadVideoById failed:', err);
-      }
-    }
+    loadAndPlay(videoId);
   };
 
   const addToQueue = (song) => {
@@ -329,11 +371,13 @@ export const PlayerProvider = ({ children }) => {
         const newIndex = Math.min(index, newQueue.length - 1);
         setCurrentIndex(newIndex);
         setCurrentSong(newQueue[newIndex]);
+        loadAndPlay(newQueue[newIndex].videoId);
       } else {
         setCurrentSong(null);
         setIsPlaying(false);
-        if (playerRef.current) {
-          try { playerRef.current.stopVideo(); } catch (err) { console.error('[Player] stopVideo failed:', err); }
+        if (audioRef.current) {
+          audioRef.current.pause();
+          audioRef.current.src = '';
         }
       }
     } else if (index < currentIndex) {
@@ -370,30 +414,23 @@ export const PlayerProvider = ({ children }) => {
     setCurrentSong(null);
     setIsPlaying(false);
     setProgress(0);
-    if (playerRef.current) {
-      try { playerRef.current.stopVideo(); } catch (err) { console.error('[Player] stopVideo failed:', err); }
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.src = '';
     }
   };
 
   const seekTo = (time) => {
     setProgress(time);
-    if (playerRef.current && playerReady) {
-      try {
-        playerRef.current.seekTo(time, true);
-      } catch (err) {
-        console.error('[Player] seekTo failed:', err);
-      }
+    if (audioRef.current) {
+      audioRef.current.currentTime = time;
     }
   };
 
   const changeVolume = (newVolume) => {
     setVolume(newVolume);
-    if (playerRef.current && playerReady) {
-      try {
-        playerRef.current.setVolume(newVolume * 100);
-      } catch (err) {
-        console.error('[Player] setVolume failed:', err);
-      }
+    if (audioRef.current) {
+      audioRef.current.volume = newVolume;
     }
   };
 
@@ -430,8 +467,6 @@ export const PlayerProvider = ({ children }) => {
     duration,
     repeat,
     shuffle,
-    playerRef,
-    playerReady,
     playSong,
     togglePlay,
     playNext,
@@ -464,24 +499,25 @@ export const PlayerProvider = ({ children }) => {
     setIsDragging,
     minimizeOffset,
     setMinimizeOffset,
+    userPresets,
+    saveCurrentPreset,
+    deleteUserPreset,
+    eqEnabled,
+    eqIndices,
+    eqGains,
+    setEqBand,
+    addEqBand,
+    removeEqBand,
+    toggleEq,
+    resetEq,
+    applyPreset,
+    eqAnalyserRef,
   };
 
   return (
     <PlayerContext.Provider value={value}>
       {children}
-      <div
-        id="hidden-player"
-        style={{
-          position: 'fixed',
-          bottom: 0,
-          right: 0,
-          width: '1px',
-          height: '1px',
-          overflow: 'hidden',
-          pointerEvents: 'none',
-          zIndex: -1,
-        }}
-      />
+      <audio ref={audioRef} preload="none" />
     </PlayerContext.Provider>
   );
 };
