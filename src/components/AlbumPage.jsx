@@ -4,6 +4,8 @@ import { usePlayer } from '../context/PlayerContext';
 import { useNavigate } from '../context/NavigationContext';
 import { youtubeScraperService } from '../services/youtubeScraper';
 import { LoadingIndicator } from './LoadingIndicator';
+import { RetryImage } from './RetryImage';
+import { apiService } from '../services/apiService';
 
 export const AlbumPage = () => {
   const { subPage, navigateBack } = useNavigate();
@@ -11,6 +13,7 @@ export const AlbumPage = () => {
   const [tracks, setTracks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [deezerFallback, setDeezerFallback] = useState(null);
 
   const album = subPage?.params;
 
@@ -25,6 +28,13 @@ export const AlbumPage = () => {
       .catch(err => { console.error('Failed to load album tracks:', err); setError('Could not reach the music backend.'); })
       .finally(() => setLoading(false));
   }, [album?.playlistId]);
+
+  useEffect(() => {
+    if (!album) { setDeezerFallback(null); return; }
+    apiService.getAlbumArt(album.title, album.channelTitle || '').then(url => {
+      if (url) setDeezerFallback(url);
+    });
+  }, [album]);
 
   if (!album) return null;
 
@@ -53,10 +63,11 @@ export const AlbumPage = () => {
       </button>
 
       <div className="flex items-center gap-6 mb-8 animate-slideDown">
-        <img
+        <RetryImage
           src={album.thumbnail}
           alt={album.title}
           className="w-40 h-40 rounded-xl object-cover shadow-lg"
+          fallbackSrc={deezerFallback}
         />
         <div className="flex-1 min-w-0">
           <h1 className="text-3xl font-bold text-on-surface mb-2">{album.title}</h1>
@@ -103,7 +114,7 @@ export const AlbumPage = () => {
               style={{ animationDelay: `${i * 0.04}s`, animationFillMode: 'backwards' }}
               onClick={() => handlePlayTrack(track)}
             >
-              <img src={track.thumbnail} alt="" className="w-12 h-12 rounded object-cover" />
+              <RetryImage src={track.thumbnail} alt="" className="w-12 h-12 rounded object-cover" />
               <div className="flex-1 min-w-0">
                 <p className="text-on-surface font-medium truncate">{track.title}</p>
                 <p className="text-on-surface-variant text-sm truncate">{track.channelTitle}</p>

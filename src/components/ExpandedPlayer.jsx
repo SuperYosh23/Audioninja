@@ -4,6 +4,8 @@ import { Play, Pause, SkipForward, SkipBack, Shuffle, Repeat, Repeat1, ChevronDo
 import { LoadingIndicator } from './LoadingIndicator';
 import { WavyProgressBar } from './WavyProgressBar';
 import { QueuePanel } from './QueuePanel';
+import { RetryImage } from './RetryImage';
+import { Ripple } from './Ripple';
 import { apiService } from '../services/apiService';
 
 function getBestThumbnail(url) {
@@ -37,6 +39,7 @@ export const ExpandedPlayer = ({ closing, onMinimize }) => {
   const {
     currentSong,
     isPlaying,
+    isLoading,
     volume,
     progress,
     duration,
@@ -61,6 +64,7 @@ export const ExpandedPlayer = ({ closing, onMinimize }) => {
   } = usePlayer();
   const [imgSrc, setImgSrc] = useState(() => currentSong?.thumbnail ? getBestThumbnail(currentSong.thumbnail) : '');
   const [prevImgSrc, setPrevImgSrc] = useState(null);
+  const [deezerFallback, setDeezerFallback] = useState(null);
   const [downloading, setDownloading] = useState(false);
   const [entering, setEntering] = useState(true);
   const [lyrics, setLyrics] = useState(null);
@@ -99,6 +103,15 @@ export const ExpandedPlayer = ({ closing, onMinimize }) => {
       }
     }
   }, [currentSong?.thumbnail]);
+
+  useEffect(() => {
+    if (!currentSong) { setDeezerFallback(null); return; }
+    const title = currentSong.album || currentSong.title;
+    const artist = currentSong.channelTitle || '';
+    apiService.getAlbumArt(title, artist).then(url => {
+      if (url) setDeezerFallback(url);
+    });
+  }, [currentSong]);
 
   useEffect(() => {
     const videoId = currentSong?.videoId;
@@ -324,7 +337,7 @@ export const ExpandedPlayer = ({ closing, onMinimize }) => {
 
   const hasTimedLyrics = lyrics?.hasTimestamps && Array.isArray(lyrics.lyrics);
 
-  if (!currentSong) return null;
+  if (!currentSong && !isLoading) return null;
 
   const expanding = dragOffset > 0;
   const minimizing = minimizeOffset > 0;
@@ -362,7 +375,12 @@ export const ExpandedPlayer = ({ closing, onMinimize }) => {
 
       {/* Main content */}
       <div className="flex-1 flex items-center justify-center px-6 pb-8">
-        {showLyrics ? (
+        {!currentSong && isLoading ? (
+          <div className="flex flex-col items-center gap-4 animate-fadeIn">
+            <LoadingIndicator size="lg" />
+            <p className="text-on-surface-variant text-lg">Loading...</p>
+          </div>
+        ) : showLyrics ? (
           <div key="lyrics" className="flex gap-12 w-full max-w-5xl h-full items-stretch animate-fadeInUp">
             {/* Synced lyrics panel */}
             <div className="flex-1 flex flex-col justify-center min-w-0">
@@ -377,11 +395,19 @@ export const ExpandedPlayer = ({ closing, onMinimize }) => {
 
             {/* Compact side panel */}
             <div className="flex flex-col justify-center gap-6 w-64 shrink-0">
-              <img
-                src={currentSong.thumbnail}
-                alt={currentSong.title}
-                className="w-full aspect-square rounded-2xl object-cover shadow-lg"
-              />
+              <div className="relative w-full aspect-square">
+                <RetryImage
+                  src={imgSrc}
+                  alt={currentSong.title}
+                  className="w-full h-full rounded-2xl object-cover shadow-lg"
+                  fallbackSrc={deezerFallback}
+                />
+                {isLoading && (
+                  <div className="absolute inset-0 bg-surface/60 rounded-2xl flex items-center justify-center">
+                    <LoadingIndicator size="md" />
+                  </div>
+                )}
+              </div>
               <div className="space-y-1 text-center">
                 <h3 className="text-base font-semibold text-on-surface truncate">{currentSong.title}</h3>
                 <p className="text-sm text-on-surface-variant truncate">{currentSong.channelTitle}</p>
@@ -401,9 +427,11 @@ export const ExpandedPlayer = ({ closing, onMinimize }) => {
                 <button onClick={playPrevious} className="p-2 hover:bg-surface-container rounded-full transition-colors">
                   <SkipBack size={20} />
                 </button>
-                <button onClick={togglePlay} className="p-3 bg-white text-black rounded-full hover:scale-105 transition-transform">
-                  {isPlaying ? <Pause size={24} /> : <Play size={24} />}
-                </button>
+                <Ripple className="rounded-full">
+                  <button onClick={togglePlay} className="p-3 bg-primary text-on-primary rounded-full shadow-lg hover:scale-105 active:scale-95 transition-all">
+                    {isPlaying ? <Pause size={24} /> : <Play size={24} />}
+                  </button>
+                </Ripple>
                 <button onClick={playNext} className="p-2 hover:bg-surface-container rounded-full transition-colors">
                   <SkipForward size={20} />
                 </button>
@@ -453,7 +481,7 @@ export const ExpandedPlayer = ({ closing, onMinimize }) => {
         ) : (
           <div key="normal" className="flex items-start gap-12 w-full max-w-4xl animate-fadeInUp">
             {/* Album art */}
-            <div className="relative flex-shrink-0 w-72 h-72">
+             <div className="relative flex-shrink-0 w-72 h-72">
               {prevImgSrc && (
                 <img
                   src={prevImgSrc}
@@ -461,12 +489,18 @@ export const ExpandedPlayer = ({ closing, onMinimize }) => {
                   className="absolute inset-0 w-full h-full rounded-2xl object-cover shadow-2xl animate-fadeOut"
                 />
               )}
-              <img
+              <RetryImage
                 src={imgSrc}
                 alt={currentSong.title}
                 className={`w-full h-full rounded-2xl object-cover shadow-2xl ${prevImgSrc ? 'animate-fadeIn' : ''}`}
                 onError={() => currentSong?.thumbnail && setImgSrc(currentSong.thumbnail)}
+                fallbackSrc={deezerFallback}
               />
+              {isLoading && (
+                <div className="absolute inset-0 bg-surface/60 rounded-2xl flex items-center justify-center z-10">
+                  <LoadingIndicator size="lg" />
+                </div>
+              )}
             </div>
 
             {/* Song info + controls */}
@@ -499,9 +533,11 @@ export const ExpandedPlayer = ({ closing, onMinimize }) => {
                   <button onClick={playPrevious} className="p-2.5 hover:bg-surface-container rounded-full transition-colors">
                     <SkipBack size={24} />
                   </button>
-                  <button onClick={togglePlay} className="p-4 bg-white text-black rounded-full hover:scale-105 transition-transform">
-                    {isPlaying ? <Pause size={28} /> : <Play size={28} />}
-                  </button>
+                  <Ripple className="rounded-full">
+                    <button onClick={togglePlay} className="p-4 bg-primary text-on-primary rounded-full shadow-xl hover:scale-105 active:scale-95 transition-all">
+                      {isPlaying ? <Pause size={28} /> : <Play size={28} />}
+                    </button>
+                  </Ripple>
                   <button onClick={playNext} className="p-2.5 hover:bg-surface-container rounded-full transition-colors">
                     <SkipForward size={24} />
                   </button>

@@ -3,6 +3,8 @@ import { Plus, Music, Home, Search, Settings, Play, Trash2, Edit3 } from 'lucide
 import { useNavigate } from '../context/NavigationContext';
 import { storage, playlistUtils } from '../utils/storage';
 import { ContextMenu } from './ContextMenu';
+import { RetryImage } from './RetryImage';
+import { Ripple } from './Ripple';
 
 const navItems = [
   { id: 'home', label: 'Home', icon: Home },
@@ -91,23 +93,24 @@ export const Sidebar = ({ activeTab, onTabChange, onNavigate, collapsed }) => {
         {navItems.map((item) => {
           const Icon = item.icon
           return (
-            <button
-              key={item.id}
-              onClick={() => { onTabChange(item.id); navigate(null) }}
-              className={`w-full flex items-center py-2.5 rounded-lg text-sm transition-colors ${
-                collapsed
-                  ? 'justify-center'
-                  : 'gap-3 px-3'
-              } ${
-                activeTab === item.id && !activePlaylistId
-                  ? 'bg-primary/20 text-primary'
-                  : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
-              }`}
-              title={collapsed ? item.label : undefined}
-            >
-              <Icon size={18} />
-              {!collapsed && <span>{item.label}</span>}
-            </button>
+            <Ripple key={item.id} className="rounded-lg" slow>
+              <button
+                onClick={() => { onTabChange(item.id); navigate(null) }}
+                className={`w-full flex items-center py-2.5 rounded-lg text-sm transition-colors ${
+                  collapsed
+                    ? 'justify-center'
+                    : 'gap-3 px-3'
+                } ${
+                  activeTab === item.id && !activePlaylistId
+                    ? 'bg-primary/20 text-primary'
+                    : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
+                }`}
+                title={collapsed ? item.label : undefined}
+              >
+                <Icon size={18} />
+                {!collapsed && <span>{item.label}</span>}
+              </button>
+            </Ripple>
           )
         })}
       </nav>
@@ -171,6 +174,7 @@ export const Sidebar = ({ activeTab, onTabChange, onNavigate, collapsed }) => {
                       />
                     </div>
                   ) : (
+                    <Ripple className="rounded-lg" slow>
                     <button
                       onContextMenu={(e) => handleContextMenu(e, pl)}
                       onClick={() => handlePlaylistClick(pl)}
@@ -182,7 +186,7 @@ export const Sidebar = ({ activeTab, onTabChange, onNavigate, collapsed }) => {
                       title={collapsed ? pl.name : undefined}
                     >
                       {thumb ? (
-                        <img src={thumb} alt="" className={`${collapsed ? 'w-8 h-8' : 'w-6 h-6'} rounded object-cover shrink-0`} />
+                        <RetryImage src={thumb} alt="" className={`${collapsed ? 'w-8 h-8' : 'w-6 h-6'} rounded object-cover shrink-0`} />
                       ) : (
                         <div className={`${collapsed ? 'w-8 h-8' : 'w-6 h-6'} rounded bg-gradient-to-br from-primary to-primary-container flex items-center justify-center shrink-0`}>
                           <Music size={collapsed ? 16 : 12} className="text-on-surface" />
@@ -195,6 +199,7 @@ export const Sidebar = ({ activeTab, onTabChange, onNavigate, collapsed }) => {
                         </div>
                       )}
                     </button>
+                    </Ripple>
                   )}
                 </div>
               );

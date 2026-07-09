@@ -1,39 +1,47 @@
 import { useState, useRef, useEffect } from 'react';
 import { X, GripVertical, Trash2, Music } from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
+import { RetryImage } from './RetryImage';
 
 export const QueuePanel = ({ onClose }) => {
   const { queue, currentIndex, currentSong, removeFromQueue, reorderQueue, shuffle } = usePlayer();
   const [dragIndex, setDragIndex] = useState(null);
   const [dragOverIndex, setDragOverIndex] = useState(null);
+  const [closing, setClosing] = useState(false);
   const panelRef = useRef(null);
+
+  const handleClose = () => {
+    if (closing) return;
+    setClosing(true);
+    setTimeout(() => onClose?.(), 100);
+  };
 
   useEffect(() => {
     const handleKey = (e) => {
-      if (e.key === 'Escape') onClose?.();
+      if (e.key === 'Escape') handleClose();
     };
     document.addEventListener('keydown', handleKey);
     return () => document.removeEventListener('keydown', handleKey);
-  }, [onClose]);
+  }, [onClose, closing]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (panelRef.current && !panelRef.current.contains(e.target)) {
-        onClose?.();
+        handleClose();
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [onClose]);
+  }, [onClose, closing]);
 
   const upcoming = queue.slice(currentIndex + 1);
   const previous = queue.slice(0, currentIndex);
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-end justify-center bg-scrim/50 backdrop-blur-sm animate-fadeIn">
+    <div className={`fixed inset-0 z-[60] flex items-end justify-center bg-scrim/50 backdrop-blur-sm ${closing ? 'animate-fadeOut [animation-duration:100ms]' : 'animate-fadeIn'}`}>
       <div
         ref={panelRef}
-        className="bg-surface-container-low rounded-t-3xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col animate-slideUpFromBottom"
+        className={`bg-surface-container-low rounded-t-3xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col ${closing ? 'animate-slideDownToBottom [animation-duration:100ms]' : 'animate-slideUpFromBottom'}`}
       >
         <div className="flex items-center justify-between px-6 py-4 border-b border-outline-variant shrink-0">
           <h2 className="text-lg font-bold text-on-surface flex items-center gap-2">
@@ -41,7 +49,7 @@ export const QueuePanel = ({ onClose }) => {
             <span className="text-sm font-normal text-on-surface-variant">({queue.length} songs)</span>
           </h2>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="p-2 hover:bg-surface-container rounded-full transition-colors"
           >
             <X size={20} />
@@ -56,7 +64,7 @@ export const QueuePanel = ({ onClose }) => {
               {currentSong && (
                 <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-primary/20">
                   <div className="w-1 h-8 bg-primary rounded-full shrink-0" />
-                  <img src={currentSong.thumbnail} alt="" className="w-10 h-10 rounded object-cover shrink-0" />
+                  <RetryImage src={currentSong.thumbnail} alt="" className="w-10 h-10 rounded object-cover shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-on-surface truncate">{currentSong.title}</p>
                     <p className="text-xs text-on-surface-variant truncate">{currentSong.channelTitle}</p>
@@ -75,7 +83,7 @@ export const QueuePanel = ({ onClose }) => {
                   key={song.videoId}
                   className="flex items-center gap-3 px-3 py-2 rounded-xl bg-surface-container/30 opacity-50"
                 >
-                  <img src={song.thumbnail} alt="" className="w-9 h-9 rounded object-cover shrink-0" />
+                  <RetryImage src={song.thumbnail} alt="" className="w-9 h-9 rounded object-cover shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-on-surface truncate">{song.title}</p>
                     <p className="text-xs text-on-surface-variant truncate">{song.channelTitle}</p>
@@ -113,7 +121,7 @@ export const QueuePanel = ({ onClose }) => {
                         <GripVertical size={16} />
                       </div>
                     )}
-                    <img src={song.thumbnail} alt="" className="w-9 h-9 rounded object-cover shrink-0" />
+                    <RetryImage src={song.thumbnail} alt="" className="w-9 h-9 rounded object-cover shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-on-surface truncate">{song.title}</p>
                       <p className="text-xs text-on-surface-variant truncate">{song.channelTitle}</p>

@@ -4,11 +4,14 @@ import { Play, Pause, SkipForward, SkipBack, ChevronUp, Shuffle, Repeat, Repeat1
 import { LoadingIndicator } from './LoadingIndicator';
 import { WavyProgressBar } from './WavyProgressBar';
 import { QueuePanel } from './QueuePanel';
+import { RetryImage } from './RetryImage';
+import { Ripple } from './Ripple';
 
 export const Player = ({ playerExpanded }) => {
   const {
     currentSong,
     isPlaying,
+    isLoading,
     volume,
     progress,
     duration,
@@ -112,7 +115,20 @@ export const Player = ({ playerExpanded }) => {
     document.addEventListener('pointerup', onUp);
   };
 
-  if (!currentSong) return null;
+  if (!currentSong && !isLoading) return null;
+
+  if (!currentSong && isLoading) {
+    return (
+      <div className="fixed bottom-0 left-0 right-0 z-30 flex justify-center">
+        <div className="bg-surface-container/95 backdrop-blur-xl rounded-full shadow-2xl mx-4 mb-4 px-5 py-3 w-full max-w-5xl">
+          <div className="flex items-center gap-3 justify-center">
+            <LoadingIndicator size="sm" />
+            <span className="text-sm text-on-surface-variant">Loading...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const transform = dragOffset > 0
     ? `translateY(${-dragOffset}px)`
@@ -135,16 +151,23 @@ export const Player = ({ playerExpanded }) => {
         }}
       >
         <div
-          className="bg-surface-container/95 backdrop-blur-xl rounded-full shadow-2xl mx-4 mb-4 px-5 py-2 w-full max-w-5xl pointer-events-auto touch-none select-none"
+          className="relative bg-surface-container/95 backdrop-blur-xl rounded-full shadow-2xl mx-4 mb-4 px-5 py-2 w-full max-w-5xl pointer-events-auto touch-none select-none"
           onClick={() => { if (!dragRef.current.moved) setPlayerExpanded(true); }}
           onPointerDown={handlePointerDown}
         >
+          {isLoading && (
+            <div className="absolute inset-0 bg-surface/60 rounded-full flex items-center justify-center z-10">
+              <LoadingIndicator size="md" />
+            </div>
+          )}
           <div className="flex items-center gap-2">
-            <img
-              src={currentSong.thumbnail}
-              alt={currentSong.title}
-              className="w-9 h-9 rounded-lg object-cover shrink-0"
-            />
+            <div className="w-9 h-9 shrink-0">
+              <RetryImage
+                src={currentSong.thumbnail}
+                alt={currentSong.title}
+                className="w-9 h-9 rounded-lg object-cover shrink-0"
+              />
+            </div>
 
             <div className="flex-1 min-w-0">
               <h3 className="font-medium truncate text-sm leading-tight">{currentSong.title}</h3>
@@ -158,9 +181,11 @@ export const Player = ({ playerExpanded }) => {
               <button onClick={playPrevious} className="p-1.5 hover:bg-surface-container-high rounded-full transition-colors">
                 <SkipBack size={16} />
               </button>
-              <button onClick={togglePlay} className="p-2 bg-white text-black rounded-full hover:scale-105 transition-transform">
-                {isPlaying ? <Pause size={18} /> : <Play size={18} />}
-              </button>
+              <Ripple className="rounded-full">
+                <button onClick={togglePlay} className="p-2 bg-primary text-on-primary rounded-full shadow-md hover:scale-105 active:scale-95 transition-all">
+                  {isPlaying ? <Pause size={18} /> : <Play size={18} />}
+                </button>
+              </Ripple>
               <button onClick={playNext} className="p-1.5 hover:bg-surface-container-high rounded-full transition-colors">
                 <SkipForward size={16} />
               </button>
@@ -191,7 +216,7 @@ export const Player = ({ playerExpanded }) => {
                   <MicVocal size={15} />
                 </button>
               )}
-              <div className="relative group ml-2">
+              <div className="relative group ml-2" onPointerDown={e => e.stopPropagation()}>
                 <button onClick={() => changeVolume(volume === 0 ? 1 : 0)} className="p-1.5 text-on-surface-variant hover:text-on-surface rounded-full transition-colors" title="Volume">
                   {volume === 0 ? <VolumeX size={15} /> : <Volume2 size={15} />}
                 </button>
@@ -225,7 +250,7 @@ export const Player = ({ playerExpanded }) => {
               <span>{formatTime(duration)}</span>
             </div>
           </div>
-        </div>
+          </div>
       </div>
 
       {downloading && (

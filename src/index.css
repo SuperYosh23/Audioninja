@@ -116,7 +116,20 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes slideUpOut {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-16px); }
+}
 
+.animate-slideUpOut { animation: slideUpOut 0.15s cubic-bezier(0.3, 0, 0.8, 0.15) forwards; }
+
+@keyframes ripple {
+  from { transform: scale(0); opacity: 0.4; }
+  to { transform: scale(4); opacity: 0; }
+}
+
+.animate-ripple { animation: ripple 0.4s ease-out forwards; }
+.animate-ripple-slow { animation: ripple 0.6s ease-out forwards; }
 
 .animate-fadeIn { animation: fadeIn 0.4s cubic-bezier(0.05, 0.7, 0.1, 1); }
 .animate-fadeOut { animation: fadeOut 0.2s cubic-bezier(0.3, 0, 0.8, 0.15) forwards; }

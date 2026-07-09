@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Plus, Play, Music } from 'lucide-react';
 import { useNavigate } from '../context/NavigationContext';
 import { storage, playlistUtils } from '../utils/storage';
+import { RetryImage } from './RetryImage';
 
 export const Playlists = () => {
   const [playlists, setPlaylists] = useState([]);
@@ -101,7 +102,7 @@ export const Playlists = () => {
                 className="flex items-center gap-4 p-4 bg-surface-container/50 rounded-xl hover:bg-surface-container transition-colors cursor-pointer group"
               >
                 {thumb ? (
-                  <img src={thumb} alt={playlist.name} className="w-16 h-16 rounded-lg object-cover" />
+                  <RetryImage src={thumb} alt={playlist.name} className="w-16 h-16 rounded-lg object-cover" />
                 ) : (
                   <div className="w-16 h-16 bg-gradient-to-br from-primary to-primary-container rounded-lg flex items-center justify-center">
                     <Music size={32} className="text-on-surface" />

@@ -4,6 +4,7 @@ import { usePlayer } from '../context/PlayerContext';
 import { useNavigate } from '../context/NavigationContext';
 import { storage, playlistUtils } from '../utils/storage';
 import { youtubeScraperService } from '../services/youtubeScraper';
+import { RetryImage } from './RetryImage';
 
 export const PlaylistPage = () => {
   const { subPage, navigate, navigateBack } = useNavigate();
@@ -101,7 +102,7 @@ export const PlaylistPage = () => {
       <div className="flex items-center gap-6 mb-8 animate-slideDown">
         <div className="relative group flex-shrink-0">
           {thumbnail ? (
-            <img src={thumbnail} alt={playlist.name} className="w-40 h-40 rounded-xl object-cover shadow-lg" />
+            <RetryImage src={thumbnail} alt={playlist.name} className="w-40 h-40 rounded-xl object-cover shadow-lg" />
           ) : (
             <div className="w-40 h-40 bg-gradient-to-br from-primary to-primary-container rounded-xl flex items-center justify-center">
               <Music size={64} className="text-on-surface/60" />
@@ -205,7 +206,7 @@ export const PlaylistPage = () => {
               style={{ animationDelay: `${i * 0.04}s`, animationFillMode: 'backwards' }}
               onClick={() => handlePlaySong(song)}
             >
-              <img src={song.thumbnail} alt="" className="w-12 h-12 rounded object-cover" />
+              <RetryImage src={song.thumbnail} alt="" className="w-12 h-12 rounded object-cover" />
               <div className="flex-1 min-w-0">
                 <p className="text-on-surface font-medium truncate">{song.title}</p>
                 <p className="text-on-surface-variant text-sm truncate">

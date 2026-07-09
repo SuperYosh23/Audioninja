@@ -13,6 +13,7 @@ export const Settings = () => {
   const [extractedColors, setExtractedColors] = useState([]);
   const [sourceColor, setSourceColor] = useState('');
   const [showThemeSection, setShowThemeSection] = useState(false);
+  const [closingTheme, setClosingTheme] = useState(false);
   const imageInputRef = useRef(null);
   const [generatedPreview, setGeneratedPreview] = useState(null);
   const [extracting, setExtracting] = useState(false);
@@ -223,7 +224,14 @@ export const Settings = () => {
         {/* Theme Customization */}
         <div className="bg-surface-container/50 rounded-xl p-6">
           <button
-            onClick={() => setShowThemeSection(!showThemeSection)}
+            onClick={() => {
+              if (showThemeSection) {
+                setClosingTheme(true);
+                setTimeout(() => { setClosingTheme(false); setShowThemeSection(false); }, 150);
+              } else {
+                setShowThemeSection(true);
+              }
+            }}
             className="w-full flex items-center justify-between"
           >
             <h3 className="text-lg font-semibold text-on-surface flex items-center gap-2">
@@ -233,8 +241,9 @@ export const Settings = () => {
             <ChevronDown size={20} className={`text-on-surface-variant transition-transform ${showThemeSection ? 'rotate-180' : ''}`} />
           </button>
 
-          {showThemeSection && (
-            <div className="mt-4 space-y-4 animate-slideUp">
+          {(showThemeSection || closingTheme) && (
+            <div className={`overflow-hidden transition-all duration-150 ease-in-out ${closingTheme ? 'max-h-0 opacity-0' : 'max-h-[2000px] opacity-100'}`}>
+            <div className={`mt-4 space-y-4 ${closingTheme ? 'animate-slideUpOut' : 'animate-slideUp'}`}>
               {customTheme && (
                 <div className="flex items-center gap-2 bg-primary/10 text-primary px-3 py-2 rounded-lg text-sm">
                   <Check size={16} />
@@ -344,6 +353,7 @@ export const Settings = () => {
                   Reset to Default
                 </button>
               </div>
+            </div>
             </div>
           )}
         </div>

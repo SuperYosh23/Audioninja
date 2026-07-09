@@ -30,6 +30,7 @@ export const PlayerProvider = ({ children }) => {
   const [queue, setQueue] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [volume, setVolume] = useState(1);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -76,8 +77,10 @@ export const PlayerProvider = ({ children }) => {
   const loadingRef = useRef(false);
   const eqEngineRef = useRef(null);
   const eqAnalyserRef = useRef(null);
+  const eqIndicesRef = useRef(eqIndices);
 
   volumeRef.current = volume;
+  eqIndicesRef.current = eqIndices;
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -158,13 +161,14 @@ export const PlayerProvider = ({ children }) => {
     setEqGains(prev => {
       const next = [...prev];
       next[index] = value;
-      eqStorage.saveSettings({ indices: eqIndices, gains: next });
+      const indices = eqIndicesRef.current;
+      eqStorage.saveSettings({ indices, gains: next });
       if (eqEngineRef.current) {
-        eqEngineRef.current.setGain(eqIndices[index], value);
+        eqEngineRef.current.setGain(indices[index], value);
       }
       return next;
     });
-  }, [eqIndices]);
+  }, []);
 
   const addEqBand = useCallback(() => {
     setEqIndices(prev => {
@@ -237,8 +241,9 @@ export const PlayerProvider = ({ children }) => {
     eqPresetStorage.deletePreset(name);
   }, []);
 
-  const loadAndPlay = async (videoId) => {
+  const loadAndPlay = async (song) => {
     if (!audioRef.current || loadingRef.current) return;
+    if (!song?.videoId) return;
 
     if (!eqEngineRef.current) {
       const engine = createEqEngine(audioRef.current, eqIndices, eqGains, eqAnalyserRef);
@@ -248,17 +253,24 @@ export const PlayerProvider = ({ children }) => {
     }
 
     loadingRef.current = true;
+    setIsLoading(true);
     try {
-      const data = await apiService.getAudioUrl(videoId);
+      const data = await apiService.getAudioUrl(song.videoId);
       if (!data?.url) throw new Error('No audio URL returned');
       audioRef.current.src = data.url;
       audioRef.current.volume = volumeRef.current;
       await audioRef.current.play();
+      setCurrentSong(song);
       setIsPlaying(true);
+      setIsLoading(false);
+      loadingRef.current = false;
     } catch (err) {
       console.error('[Player] Failed to load audio:', err);
-    } finally {
+      setIsLoading(false);
       loadingRef.current = false;
+      if (queue.length > 0) {
+        playNextRef.current();
+      }
     }
   };
 
@@ -277,10 +289,8 @@ export const PlayerProvider = ({ children }) => {
         setCurrentIndex(index >= 0 ? index : 0);
       }
     }
-    setCurrentSong(song);
-    setIsPlaying(true);
     setProgress(0);
-    loadAndPlay(song.videoId);
+    loadAndPlay(song);
   };
 
   const togglePlay = () => {
@@ -308,14 +318,12 @@ export const PlayerProvider = ({ children }) => {
     if (currentIndex < queue.length - 1) {
       const nextIndex = currentIndex + 1;
       setCurrentIndex(nextIndex);
-      setCurrentSong(queue[nextIndex]);
       setProgress(0);
-      loadAndPlay(queue[nextIndex].videoId);
+      loadAndPlay(queue[nextIndex]);
     } else if (repeat === 'all') {
       setCurrentIndex(0);
-      setCurrentSong(queue[0]);
       setProgress(0);
-      loadAndPlay(queue[0].videoId);
+      loadAndPlay(queue[0]);
     }
   }, [queue, currentIndex, repeat]);
 
@@ -325,31 +333,27 @@ export const PlayerProvider = ({ children }) => {
     if (currentIndex > 0) {
       const prevIndex = currentIndex - 1;
       setCurrentIndex(prevIndex);
-      setCurrentSong(queue[prevIndex]);
       setProgress(0);
-      loadAndPlay(queue[prevIndex].videoId);
+      loadAndPlay(queue[prevIndex]);
     }
   };
 
   const setQueueSongs = (songs, startIndex = 0) => {
     originalQueueRef.current = [...songs];
-    let videoId;
+    let song;
     if (shuffle) {
       shuffledIndicesRef.current = shuffleArray(songs.map((_, i) => i));
       const shuffled = shuffledIndicesRef.current.map(i => songs[i]);
       setQueue(shuffled);
       setCurrentIndex(0);
-      setCurrentSong(shuffled[0]);
-      videoId = shuffled[0].videoId;
+      song = shuffled[0];
     } else {
       setQueue(songs);
       setCurrentIndex(startIndex);
-      setCurrentSong(songs[startIndex]);
-      videoId = songs[startIndex].videoId;
+      song = songs[startIndex];
     }
-    setIsPlaying(true);
     setProgress(0);
-    loadAndPlay(videoId);
+    loadAndPlay(song);
   };
 
   const addToQueue = (song) => {
@@ -360,18 +364,21 @@ export const PlayerProvider = ({ children }) => {
 
   const removeFromQueue = (index) => {
     const newQueue = queue.filter((_, i) => i !== index);
-    originalQueueRef.current = originalQueueRef.current.filter((_, i) => {
-      if (!shuffle) return i !== index;
+    if (!shuffle) {
+      originalQueueRef.current = originalQueueRef.current.filter((_, i) => i !== index);
+    } else {
       const shuffledIdx = shuffledIndicesRef.current[index];
-      return shuffledIndicesRef.current[i] !== shuffledIdx;
-    });
+      originalQueueRef.current = originalQueueRef.current.filter((_, i) => i !== shuffledIdx);
+      shuffledIndicesRef.current = shuffledIndicesRef.current
+        .filter(si => si !== shuffledIdx)
+        .map(si => si > shuffledIdx ? si - 1 : si);
+    }
     setQueue(newQueue);
     if (index === currentIndex) {
       if (newQueue.length > 0) {
         const newIndex = Math.min(index, newQueue.length - 1);
         setCurrentIndex(newIndex);
-        setCurrentSong(newQueue[newIndex]);
-        loadAndPlay(newQueue[newIndex].videoId);
+        loadAndPlay(newQueue[newIndex]);
       } else {
         setCurrentSong(null);
         setIsPlaying(false);
@@ -462,6 +469,7 @@ export const PlayerProvider = ({ children }) => {
     queue,
     currentIndex,
     isPlaying,
+    isLoading,
     volume,
     progress,
     duration,

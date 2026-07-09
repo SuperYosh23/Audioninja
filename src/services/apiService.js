@@ -29,7 +29,7 @@ async function doCheckLyrics(videoId) {
 }
 
 function thumb(thumbnails) {
-  if (!thumbnails || !thumbnails.length) return ''
+  if (!thumbnails || !thumbnails.length) return null
   return thumbnails[thumbnails.length - 1].url
 }
 
@@ -184,5 +184,26 @@ export const apiService = {
       if (!id || lyricsCache.has(id)) continue
       doCheckLyrics(id)
     }
+  },
+
+  albumArtCache: new Map(),
+
+  async getAlbumArt(title, artist) {
+    const key = `${title}|${artist}`;
+    if (this.albumArtCache.has(key)) return this.albumArtCache.get(key);
+    const promise = (async () => {
+      try {
+        const res = await fetch(`${API_BASE}/albumart?title=${encodeURIComponent(title || '')}&artist=${encodeURIComponent(artist || '')}`);
+        const data = await res.json();
+        const url = data?.url || null;
+        this.albumArtCache.set(key, url);
+        return url;
+      } catch {
+        this.albumArtCache.set(key, null);
+        return null;
+      }
+    })();
+    this.albumArtCache.set(key, promise);
+    return promise;
   },
 }

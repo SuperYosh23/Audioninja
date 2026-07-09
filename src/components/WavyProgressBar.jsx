@@ -67,7 +67,7 @@ export const WavyProgressBar = ({ progress = 0, height, onSeek }) => {
       ctx.beginPath();
       for (let x = 0; x <= pw; x += 1) {
         const y = centerY + amp * Math.sin(2 * Math.PI * x / wl + phaseRad);
-        x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
       }
       ctx.strokeStyle = colors.primary;
       ctx.lineWidth = strokeW;
@@ -88,7 +88,10 @@ export const WavyProgressBar = ({ progress = 0, height, onSeek }) => {
     onSeek(Math.max(0, Math.min(1, fraction)));
   };
 
+  const pointerDownRef = useRef(null);
+
   const handlePointerDown = (e) => {
+    pointerDownRef.current = { clientX: e.clientX, clientY: e.clientY };
     draggingRef.current = true;
     setDragging(true);
     e.currentTarget.setPointerCapture(e.pointerId);
@@ -108,10 +111,17 @@ export const WavyProgressBar = ({ progress = 0, height, onSeek }) => {
     seekFromEvent(e);
   };
 
+  const handleClick = (e) => {
+    const pd = pointerDownRef.current;
+    if (pd && (Math.abs(e.clientX - pd.clientX) > 3 || Math.abs(e.clientY - pd.clientY) > 3)) return;
+    pointerDownRef.current = null;
+    seekFromEvent(e);
+  };
+
   return (
     <div
       ref={wrapRef}
-      onClick={seekFromEvent}
+      onClick={handleClick}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}

@@ -6,6 +6,7 @@ import { storage } from '../utils/storage';
 import { youtubeScraperService } from '../services/youtubeScraper';
 import { PlaylistPickerModal } from './PlaylistPickerModal';
 import { LoadingIndicator } from './LoadingIndicator';
+import { RetryImage } from './RetryImage';
 
 export const Recommendations = () => {
   const [recommendations, setRecommendations] = useState([]);
@@ -109,7 +110,7 @@ export const Recommendations = () => {
                     onClick={() => handlePlaySong(song)}
                   >
                     <div className="relative">
-                      <img
+                      <RetryImage
                         src={song.thumbnail}
                         alt={song.title}
                         className="w-full aspect-square rounded-lg object-cover mb-3"
@@ -157,7 +158,7 @@ export const Recommendations = () => {
                     style={{ animationDelay: `${index * 0.04}s`, animationFillMode: 'backwards' }}
                     onClick={() => handlePlayHistorySong(song)}
                   >
-                    <img
+                    <RetryImage
                       src={song.thumbnail}
                       alt={song.title}
                       className="w-12 h-12 rounded object-cover"

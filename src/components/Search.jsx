@@ -5,6 +5,7 @@ import { useNavigate } from '../context/NavigationContext';
 import { youtubeScraperService } from '../services/youtubeScraper';
 import { PlaylistPickerModal } from './PlaylistPickerModal';
 import { LoadingIndicator } from './LoadingIndicator';
+import { RetryImage } from './RetryImage';
 
 export const Search = ({ searchQuery, setSearchQuery }) => {
   const [results, setResults] = useState({ songs: [], albums: [], playlists: [] });
@@ -113,7 +114,7 @@ export const Search = ({ searchQuery, setSearchQuery }) => {
         <div className="space-y-2">
           {results.songs.map((song, i) => (
             <div key={song.videoId} className="flex items-center gap-4 p-3 bg-surface-container/50 rounded-xl hover:bg-surface-container transition-colors group animate-slideUp" style={{ animationDelay: `${i * 0.04}s`, animationFillMode: 'backwards' }}>
-              <img src={song.thumbnail} alt="" className="w-12 h-12 rounded object-cover" />
+              <RetryImage src={song.thumbnail} alt="" className="w-12 h-12 rounded object-cover" />
               <div className="flex-1 min-w-0">
                 <p className="font-medium truncate text-on-surface">{song.title}</p>
                 <p className="text-sm text-on-surface-variant truncate">
@@ -140,7 +141,7 @@ export const Search = ({ searchQuery, setSearchQuery }) => {
           {results.albums.map((album, i) => (
             <div key={album.playlistId} onClick={() => openAlbum(album)}
                  className="bg-surface-container/50 rounded-xl p-4 cursor-pointer hover:bg-surface-container transition-colors hover:scale-[1.02] animate-scaleIn" style={{ animationDelay: `${i * 0.06}s`, animationFillMode: 'backwards' }}>
-              <img src={album.thumbnail} alt="" className="w-full aspect-square rounded-lg object-cover mb-3" />
+              <RetryImage src={album.thumbnail} alt="" className="w-full aspect-square rounded-lg object-cover mb-3" />
               <p className="text-on-surface font-medium truncate">{album.title}</p>
               <p className="text-on-surface-variant text-sm truncate">
                 <span onClick={e => { e.stopPropagation(); openArtist(album.channelTitle, album.channelId, album.thumbnail) }}

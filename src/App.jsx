@@ -11,6 +11,7 @@ import { ExpandedPlayer } from './components/ExpandedPlayer';
 import { ArtistPage } from './components/ArtistPage';
 import { PlaylistPage } from './components/PlaylistPage';
 import { AlbumPage } from './components/AlbumPage';
+import { initGlobalRipple } from './utils/rippleEffect';
 
 function App() {
   const [activeTab, setActiveTab] = useState('home');
@@ -21,6 +22,10 @@ function App() {
   const searchRef = useRef(null);
   const { subPage, navigate } = useNavigate();
   const { playerExpanded, setPlayerExpanded, dragOffset } = usePlayer();
+
+  useEffect(() => {
+    initGlobalRipple();
+  }, []);
 
   useEffect(() => {
     if (!window.electronAPI?.isElectron) return;
@@ -45,9 +50,11 @@ function App() {
     }
   }, [activeTab]);
 
+  const playerExpandedRef = useRef(playerExpanded);
+  playerExpandedRef.current = playerExpanded;
   useEffect(() => {
-    if (playerExpanded) setPlayerExpanded(false);
-  }, [activeTab, subPage]);
+    if (playerExpandedRef.current) setPlayerExpanded(false);
+  }, [activeTab, subPage, setPlayerExpanded]);
 
   const handleSearch = (e) => {
     e.preventDefault();

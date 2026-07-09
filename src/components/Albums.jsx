@@ -3,6 +3,7 @@ import { Disc3, Search as SearchIcon } from 'lucide-react';
 import { useNavigate } from '../context/NavigationContext';
 import { youtubeScraperService } from '../services/youtubeScraper';
 import { LoadingIndicator } from './LoadingIndicator';
+import { RetryImage } from './RetryImage';
 
 export const Albums = () => {
   const [query, setQuery] = useState('');
@@ -87,7 +88,7 @@ export const Albums = () => {
               onClick={() => handleOpenAlbum(album)}
               className="bg-surface-container/50 rounded-xl p-4 cursor-pointer hover:bg-surface-container transition-colors hover:scale-[1.02]"
             >
-              <img
+              <RetryImage
                 src={album.thumbnail}
                 alt={album.title}
                 className="w-full aspect-square rounded-lg object-cover mb-3"

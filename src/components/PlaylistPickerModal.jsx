@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Plus, Music, X, Check } from 'lucide-react';
 import { storage, playlistUtils } from '../utils/storage';
+import { RetryImage } from './RetryImage';
 
 export const PlaylistPickerModal = ({ song, onClose }) => {
   const [playlists, setPlaylists] = useState(() => storage.getPlaylists());
@@ -40,7 +41,7 @@ export const PlaylistPickerModal = ({ song, onClose }) => {
 
         {/* Song preview */}
         <div className="flex items-center gap-3 px-5 py-3 bg-surface-container/80 border-b border-outline-variant">
-          <img src={song.thumbnail} alt="" className="w-10 h-10 rounded object-cover" />
+          <RetryImage src={song.thumbnail} alt="" className="w-10 h-10 rounded object-cover" />
           <div className="min-w-0 flex-1">
             <p className="text-sm text-on-surface font-medium truncate">{song.title}</p>
             <p className="text-xs text-on-surface-variant truncate">{song.channelTitle}</p>
@@ -93,7 +94,7 @@ export const PlaylistPickerModal = ({ song, onClose }) => {
                   {addedId === pl.id ? (
                     <div className="w-full h-full bg-primary flex items-center justify-center"><Check size={16} /></div>
                   ) : pl.customThumbnail || pl.songs?.[0]?.thumbnail ? (
-                    <img src={pl.customThumbnail || pl.songs[0].thumbnail} alt="" className="w-full h-full object-cover" />
+                    <RetryImage src={pl.customThumbnail || pl.songs[0].thumbnail} alt="" className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-primary to-primary-container flex items-center justify-center"><Music size={14} className="text-on-surface" /></div>
                   )}

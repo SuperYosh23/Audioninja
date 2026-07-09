@@ -5,6 +5,10 @@ import logging
 import yt_dlp
 import tempfile
 import os
+import requests
+from urllib.parse import quote
+
+DEEZER_API = 'https://api.deezer.com'
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -131,6 +135,34 @@ def get_lyrics(video_id):
     except Exception as e:
         logger.error(f'Failed to get lyrics for {video_id}: {e}')
         return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/albumart', methods=['GET'])
+def get_albumart():
+    title = request.args.get('title', '')
+    artist = request.args.get('artist', '')
+    if not title and not artist:
+        return jsonify({'error': 'missing title or artist'}), 400
+    try:
+        query = quote(f'{title} {artist}'.strip())
+        resp = requests.get(f'{DEEZER_API}/search/album?q={query}&limit=3', timeout=5)
+        if resp.status_code != 200:
+            return jsonify({'url': None})
+        data = resp.json()
+        albums = data.get('data', [])
+        if not albums:
+            return jsonify({'url': None})
+        for cover_key in ('cover_big', 'cover_medium', 'cover'):
+            url = albums[0].get(cover_key)
+            if url:
+                return jsonify({'url': url.replace('https://e-cdns-images.dzcdn.net', 'https://cdns-images.dzcdn.net')})
+        fallback = albums[0].get('cover_medium') or albums[0].get('cover') or albums[0].get('cover_small')
+        if fallback:
+            return jsonify({'url': fallback})
+        return jsonify({'url': None})
+    except Exception as e:
+        logger.error(f'Deezer album art failed: {e}')
+        return jsonify({'url': None})
 
 
 @app.route('/api/audio/<video_id>', methods=['GET'])

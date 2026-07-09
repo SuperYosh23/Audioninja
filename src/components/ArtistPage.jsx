@@ -5,6 +5,7 @@ import { useNavigate } from '../context/NavigationContext';
 import { youtubeScraperService } from '../services/youtubeScraper';
 import { PlaylistPickerModal } from './PlaylistPickerModal';
 import { LoadingIndicator } from './LoadingIndicator';
+import { RetryImage } from './RetryImage';
 
 export const ArtistPage = () => {
   const { subPage, navigate, navigateBack } = useNavigate();
@@ -77,7 +78,7 @@ export const ArtistPage = () => {
       <div className="flex items-center gap-6 mb-8 animate-slideDown">
         <div className="w-32 h-32 rounded-full overflow-hidden bg-gradient-to-br from-purple-600 to-purple-800 flex-shrink-0">
           {thumbnail ? (
-            <img src={thumbnail} alt={artist.name} className="w-full h-full object-cover" />
+            <RetryImage src={thumbnail} alt={artist.name} className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
               <Music size={48} className="text-on-surface/60" />
@@ -118,7 +119,7 @@ export const ArtistPage = () => {
                 className="flex-shrink-0 w-40 cursor-pointer hover:scale-105 transition-transform animate-scaleIn"
                 style={{ animationDelay: `${i * 0.08}s`, animationFillMode: 'backwards' }}
               >
-                <img
+                <RetryImage
                   src={album.thumbnail}
                   alt={album.title}
                   className="w-40 h-40 rounded-lg object-cover mb-2"
@@ -155,7 +156,7 @@ export const ArtistPage = () => {
               style={{ animationDelay: `${i * 0.04}s`, animationFillMode: 'backwards' }}
               onClick={() => handlePlaySong(song)}
             >
-              <img src={song.thumbnail} alt="" className="w-12 h-12 rounded object-cover" />
+              <RetryImage src={song.thumbnail} alt="" className="w-12 h-12 rounded object-cover" />
               <div className="flex-1 min-w-0">
                 <p className="text-on-surface font-medium truncate">{song.title}</p>
                 <p className="text-on-surface-variant text-sm truncate">{song.channelTitle}</p>
